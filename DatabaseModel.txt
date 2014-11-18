@@ -1,0 +1,20 @@
+This file contains a mockup database model as follows:
+Table
+ - field
+
+
+customer
+  - id
+
+card
+  - id
+  - customerID (foreign key to customer table)
+  - totalKm
+  - expirationDate
+  - revocationStatus
+  - pubSignKey
+
+terminal (Don't know if we need this?)
+  - id
+  - pubSignKey
+  - pubEncKey
