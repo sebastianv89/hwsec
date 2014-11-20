@@ -5,9 +5,10 @@ Table
 
 customer
   - id
+  - name
 
 card
-  - id
+  - id (isn't the certificate the id (or the public key)?)
   - customerID (foreign key to customer table)
   - totalKm
   - expirationDate
@@ -17,4 +18,8 @@ card
 terminal (Don't know if we need this?)
   - id
   - pubSignKey
-  - pubEncKey
+  - secretEncKey
+
+rentalTermLog (Probably easiest in database?)
+  - timestamp
+  - message
