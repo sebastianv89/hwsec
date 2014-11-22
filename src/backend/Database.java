@@ -27,47 +27,77 @@ public class Database {
 	}
 
 	/**
-	 * Test function to select all customers
+	 * Return a ResultSet with all data about a specific card identified by the publicKey
+	 * 
+	 * @param publicKey
+	 * @return 
 	 */
-	public void selectCustomer() {
-	      Statement stmt;
+	public ResultSet selectCard(byte[] publicKey) {
+	    Statement stmt;
+	    ResultSet rs = null;
 		try {
 			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery( "SELECT * FROM customer;" );
-		      while ( rs.next() ) {
-		         int id = rs.getInt("id");
-		         String  name = rs.getString("name");
-		         int age  = rs.getInt("age");
-		         String  address = rs.getString("address");
-		         float salary = rs.getFloat("salary");
-		         System.out.println( "ID = " + id );
-		         System.out.println( "NAME = " + name );
-		         System.out.println( "AGE = " + age );
-		         System.out.println( "ADDRESS = " + address );
-		         System.out.println( "SALARY = " + salary );
-		         System.out.println();
-		      }
-		      rs.close();
-		      stmt.close();
-		      conn.close();
-			
+			rs = stmt.executeQuery( "SELECT * FROM card WHERE publicKey = \"" + publicKey + "\");" );
+		    //rs.close();
+		    stmt.close();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	      
+		return rs;
 		
-		
+	}
+	
+	/**
+	 * Resolves customerId into name
+	 * 
+	 * @param customerId
+	 * @return name
+	 */
+	public String selectCustomer(Integer customerId) {
+	      Statement stmt;
+	      String name = "";
+		try {
+			stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery( "SELECT name FROM card WHERE customerId = \"" + customerId + "\");" );
+		      while ( rs.next() ) {
+		         name = rs.getString("name");
+		      }
+		      rs.close();
+		      stmt.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return name;
+	}
+	
+	public void insertCustomer(String customerName) {
+	    Statement stmt;
+		try {
+			stmt = conn.createStatement();
+			stmt.executeUpdate( "INSERT INTO customer (name) VALUES (\"" + customerName + "\");"  );
+		    stmt.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	/**
 	 * Add a smartcard to the database
 	 */
 	public void addSmartcard(int customerId, long expiration, byte[] publicKey) {
-		// TODO: implement
-		// sql("INSERT INTO smartcards ('customerId', 'totalKm', 'expiration',
-		// 'revocation', 'publicKey') VALUES ($customerId, 0, $expiration,
-		// FALSE, $publicKey)");
+	    Statement stmt;
+		try {
+			stmt = conn.createStatement();
+			stmt.executeUpdate( "INSERT INTO card (customerId, expiration, revocation, publicKey) VALUES (\"" + customerId + "\", \"" + expiration + "\", \"" +
+					false + "\", \"" + publicKey + "\");"  );
+		    stmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
 		return;
 	}
 	
