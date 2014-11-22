@@ -23,7 +23,6 @@ public class Database {
 					+ e.getMessage());
 			System.exit(0);
 		}
-		System.out.println("Success");
 	}
 
 	/**
@@ -78,6 +77,7 @@ public class Database {
 			stmt = conn.createStatement();
 			stmt.executeUpdate( "INSERT INTO customer (name) VALUES (\"" + customerName + "\");"  );
 		    stmt.close();
+		    conn.commit();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -94,11 +94,10 @@ public class Database {
 			stmt.executeUpdate( "INSERT INTO card (customerId, expiration, revocation, publicKey) VALUES (\"" + customerId + "\", \"" + expiration + "\", \"" +
 					false + "\", \"" + publicKey + "\");"  );
 		    stmt.close();
+		    conn.commit();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
-		return;
 	}
 	
 	/**
@@ -107,20 +106,44 @@ public class Database {
 	 * @param publicKey		Used for identifying the correct card
 	 */
 	public void revokeSmartcard(byte[] publicKey) {
-		// TODO: implement
-		// sql("UPDATE smartcards SET revoked=TRUE WHERE publicKey=$publicKey");
+	    Statement stmt;
+		try {
+			stmt = conn.createStatement();
+			stmt.executeUpdate( "UPDATE card SET revoked = \"" + true + "\" WHERE publicKey = \"" + publicKey + "\";"  );
+		    stmt.close();
+		    conn.commit();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	/**
 	 * Check the revoked status flag
 	 * 
 	 * @param publicKey		Used for identifying the correct card
-	 * @return the status of the revoked flag
+	 * @return the status of the revoked flag (true = revoked, false = not revoked)
 	 */
 	public boolean isRevoked(byte[] publicKey) {
-		// TODO: implement
-		// sql("SELECT revoked FROM smartcards WHERE publicKey=$publicKey"); 
-		return false;
+	    Statement stmt;
+	    String rev = "";
+		try {
+			stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery( "SELECT revoked FROM card WHERE publicKey = \"" + publicKey + "\");" );
+		      while ( rs.next() ) {
+		         rev = rs.getString("revoked");
+		      }
+		      rs.close();
+		      stmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		if (rev.equalsIgnoreCase("true") || rev.equalsIgnoreCase("false")) {
+		    return Boolean.valueOf(rev);
+		} else {
+		    return false; //TODO: We return false if the card is not found???
+		}
 	}
 
 	/**
