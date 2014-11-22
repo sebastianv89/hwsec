@@ -10,10 +10,10 @@ customer
 card
   - id (isn't the certificate the id (or the public key)?)
   - customerID (foreign key to customer table)
-  - totalKm
-  - expirationDate
-  - revocationStatus
-  - pubSignKey
+  - totalKm (int)
+  - expiration (text field which contains a timestamp, could also be a unixtime timestamp?)
+  - revocation (no boolean support, so must be stored as integer: 0=false,1=true)
+  - publicKey (stored as blob)
 
 terminal (Don't know if we need this?)
   - id
