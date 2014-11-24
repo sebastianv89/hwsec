@@ -3,6 +3,7 @@ package backend;
 import java.util.Calendar;
 import java.util.Date;
 
+
 /**
  * Wrapper class for the Backend System. This class serves as an interface for
  * the {@link PersonalTerminal} and {@link RentalTerminal} classes.
@@ -23,8 +24,10 @@ public class Backend {
 	 * @param customerId
 	 *            customer id, link card to this customer
 	 * @return certificate and secret key of the card
+	 * 
+	 * @Fitria: add km to the function
 	 */
-	public InitData registerNewCard(int customerId) {
+	public InitData registerNewCard(int customerId, short km) {
 		// generate a new (random) keypair
 		KeyPair keypair = new KeyPair();
 		long exp = getExpirationDate();
@@ -36,8 +39,8 @@ public class Backend {
 		// get the CA verification key
 		byte[] certVerifKey = ca.getVerificationKey();
 
-		// add smartcard to database
-		db.addSmartcard(customerId, exp, keypair.getPublic());
+		// add smartcard to database   //@Fitria add km
+		db.addSmartcard(customerId, km, exp, keypair.getPublic());
 
 		return new InitData(cert, keypair.getPrivate(), certVerifKey);
 	}
@@ -153,4 +156,5 @@ public class Backend {
 		return c.getTimeInMillis(); // TODO: can't we make this a short, maybe a
 									// counter in days
 	}
+	
 }
