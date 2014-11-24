@@ -23,6 +23,10 @@ public class Database {
 					+ e.getMessage());
 			System.exit(0);
 		}
+<<<<<<< HEAD
+		//System.out.println("Success");
+=======
+>>>>>>> origin/master
 	}
 
 	/**
@@ -70,7 +74,7 @@ public class Database {
 		}
 		return name;
 	}
-	
+
 	public void insertCustomer(String customerName) {
 	    Statement stmt;
 		try {
@@ -86,12 +90,16 @@ public class Database {
 	
 	/**
 	 * Add a smartcard to the database
+	 * 
+	 * @Fitria edit 24/11/14: 
+	 * add totalKm in the insert function
 	 */
-	public void addSmartcard(int customerId, long expiration, byte[] publicKey) {
-	    Statement stmt;
+	public void addSmartcard(int customerId, int kilometers, long expiration, byte[] publicKey) {
+		Statement stmt;
 		try {
 			stmt = conn.createStatement();
-			stmt.executeUpdate( "INSERT INTO card (customerId, expiration, revocation, publicKey) VALUES (\"" + customerId + "\", \"" + expiration + "\", \"" +
+			stmt.executeUpdate( "INSERT INTO card (customerId, totalKm, expiration, revocation, publicKey) "
+					+ "VALUES (\"" + customerId + "\", \"" + kilometers + "\", \"" + expiration + "\", \"" +
 					false + "\", \"" + publicKey + "\");"  );
 		    stmt.close();
 		    conn.commit();
@@ -168,7 +176,28 @@ public class Database {
 		// customerID = sql("INSERT INTO customers ('name') VALUES $name");
 		return 0;
 	}
-
 	
+	/*
+	 * @fitria
+	 * select the latest id from database customer
+	 * Need for RentalTerminal_classes.RegisterNewCustomer
+	 * Use case: Register Customer
+	 */
+	public int getLastID() {
+		Statement stmt;
+	    int id = 0;
+		try {
+			stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery("select max(id) as id from customer" );
+			while(rs.next())
+				id = rs.getInt("id");
+		    rs.close();
+		    stmt.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return id;
+	}	
 
 }
