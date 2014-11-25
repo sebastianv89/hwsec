@@ -1,57 +1,44 @@
 package backend;
 
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.security.PublicKey;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 
-import javax.crypto.Cipher;
 
-/** Certificate authority */
+
+
+/** Certificate authority
+ * Will generate signatures ("certificates" in our document) 
+ * */
 public class CertAuth {
 
 	public enum TYPE {
 		SMARTCARD, RENTALTERM, VEHICLETERM
 	};
 
-	private RSAPublicKey capubkey;
-	private RSAPrivateKey caprivkey;
-
-	private static final byte[] signKey = new byte[] { (byte) 0xca,
-			(byte) 0xfe, (byte) 0xba, (byte) 0xbe };
-	private byte[] verifKey;
-
+//	private RSAPublicKey capubkey;
+	private static RSAPrivateKey caprivkey;
+	
 	public CertAuth() {
-		// TODO: read keys from files
-		try {
-			/* Get the secret message from file. */
-			FileInputStream plainfile = new FileInputStream(inFileName);
-			byte[] plaintext = new byte[plainfile.available()];
-			plainfile.read(plaintext);
-			plainfile.close();
+			String CAPrivateKeyFile = "CAPrivateKey"; // Path to the CA private key
 
-			/* Get the public key from file. */
-			PublicKey publickey = readPublicKey("publickey");
-
-			/* Create a cipher for encrypting. */
-			Cipher encrypt_cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-			encrypt_cipher.init(Cipher.ENCRYPT_MODE, publickey);
-
-			/* Encrypt the secret message and store in file. */
-			byte[] ciphertext = encrypt_cipher.doFinal(plaintext);
-			FileOutputStream cipherfile = new FileOutputStream(outFileName);
-			cipherfile.write(ciphertext);
-			cipherfile.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+			// Get the private key from file.
+			caprivkey = (RSAPrivateKey) readPrivateKey(CAPrivateKeyFile);
 
 	}
 
-	public byte[] getVerificationKey() {
-		return verifKey.clone();
-	}
+//	public byte[] getVerificationKey() {
+//		return verifKey.clone();
+//	}
 
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey) {
 		// TODO: encode certificate
@@ -65,10 +52,96 @@ public class CertAuth {
 		return signRaw(encoded);
 	}
 
-	private byte[] signRaw(byte[] rawData) {
-		byte[] sig = new byte[64];
-		// TODO: implement
-		return sig;
+	/** Sign a raw piece of bytes
+	 * 
+	 * To verify use:
+	 * Signature sig = Signature.getInstance("MD5WithRSA");
+	 * sig.initVerify(capubkey);
+	 * sig.update(rawData);
+	 * sig.verify(signRaw(rawData))
+	 * 
+	 * @input byte array rawData
+	 * @return byte array signature
+	 */
+	public static byte[] signRaw(byte[] rawData) {
+		byte[] signatureBytes = null; // This will contain the signature
+	    try {
+	    	Signature sig = Signature.getInstance("MD5WithRSA");
+			sig.initSign(caprivkey);
+		    sig.update(rawData);
+		    signatureBytes = sig.sign();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SignatureException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    
+		return signatureBytes;
 	}
 
+	
+   public static RSAPrivateKey readPrivateKey(String filename) { 
+	    FileInputStream file;
+	    RSAPrivateKey privkey = null;
+		try {
+			file = new FileInputStream(filename);
+			byte[] bytes = new byte[file.available()];
+			file.read(bytes);
+			file.close();
+			privkey = (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(bytes));
+  
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return privkey;
+   }
+   
+   /* This function is not used here but you can copy-paste it to your other classes if you need to read a public keyfile
+    * 	   public static RSAPublicKey readPublicKey(String filename) { 
+	   RSAPublicKey pubkey = null;
+	   FileInputStream file;
+		try {
+			file = new FileInputStream(filename);
+			byte[] bytes = new byte[file.available()];
+			file.read(bytes);
+			file.close();
+			X509EncodedKeySpec pubspec = new X509EncodedKeySpec(bytes);
+			KeyFactory factory = KeyFactory.getInstance("RSA");
+			pubkey = (RSAPublicKey) factory.generatePublic(pubspec);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return pubkey;
+   }
+    */
+
+   
+   
 }
