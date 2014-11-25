@@ -27,21 +27,19 @@ public class CertAuth {
 	};
 
 	private RSAPublicKey capubkey;
-	private static RSAPrivateKey caprivkey;
+	private RSAPrivateKey caprivkey;
 	private String CAPrivateKeyFile = "CAPrivateKey"; // Path to the CA private key
 	private String CAPublicKeyFile = "CAPublicKey";
 	
 	public CertAuth() {
-
-
 			// Get the private key from file.
-			caprivkey = (RSAPrivateKey) readPrivateKey(CAPrivateKeyFile);
-			capubkey = (RSAPublicKey) readPublicKey(CAPublicKeyFile);
+			readPrivateKey(CAPrivateKeyFile);
+			readPublicKey(CAPublicKeyFile);
 
 	}
 
 	public RSAPublicKey getVerificationKey() {
-		return readPublicKey(CAPublicKeyFile);
+		return capubkey;
 	}
 
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey) {
@@ -67,7 +65,7 @@ public class CertAuth {
 	 * @input byte array rawData
 	 * @return byte array signature
 	 */
-	public static byte[] signRaw(byte[] rawData) {
+	public byte[] signRaw(byte[] rawData) {
 		byte[] signatureBytes = null; // This will contain the signature
 	    try {
 	    	Signature sig = Signature.getInstance("MD5WithRSA");
@@ -92,15 +90,14 @@ public class CertAuth {
 	}
 
 	
-   public static RSAPrivateKey readPrivateKey(String filename) { 
+   private void readPrivateKey(String filename) { 
 	    FileInputStream file;
-	    RSAPrivateKey privkey = null;
 		try {
 			file = new FileInputStream(filename);
 			byte[] bytes = new byte[file.available()];
 			file.read(bytes);
 			file.close();
-			privkey = (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(bytes));
+			caprivkey = (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(bytes));
   
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -115,13 +112,10 @@ public class CertAuth {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		return privkey;
    }
    
    
-   public static RSAPublicKey readPublicKey(String filename) { 
-	   RSAPublicKey pubkey = null;
+   private void readPublicKey(String filename) { 
 	   FileInputStream file;
 		try {
 			file = new FileInputStream(filename);
@@ -130,7 +124,7 @@ public class CertAuth {
 			file.close();
 			X509EncodedKeySpec pubspec = new X509EncodedKeySpec(bytes);
 			KeyFactory factory = KeyFactory.getInstance("RSA");
-			pubkey = (RSAPublicKey) factory.generatePublic(pubspec);
+			capubkey = (RSAPublicKey) factory.generatePublic(pubspec);
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -142,7 +136,6 @@ public class CertAuth {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return pubkey;
    }
    
    
