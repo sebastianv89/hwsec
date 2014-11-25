@@ -3,6 +3,7 @@ package backend;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -22,8 +23,17 @@ import java.security.spec.X509EncodedKeySpec;
  * */
 public class CertAuth {
 
+	
+	
 	public enum TYPE {
-		SMARTCARD, RENTALTERM, VEHICLETERM
+		SMARTCARD ((byte)0), RENTALTERM ((byte)1), VEHICLETERM ((byte)2);
+		
+		public final byte code;
+		TYPE(byte code) {
+			this.code = code;
+		}
+		
+		
 	};
 
 	private RSAPublicKey capubkey;
@@ -43,15 +53,37 @@ public class CertAuth {
 	}
 
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey) {
-		// TODO: encode certificate
-		byte[] encoded = new byte[64];
-		return signRaw(encoded);
+		byte[] byteTuple = new byte[163]; //TODO: Check length
+		byteTuple[0] = type.code;
+		byte[] pk = publicKey.getEncoded();
+		System.arraycopy(pk, 0, byteTuple, 1, pk.length);
+		
+		byte[] signature = signRaw(byteTuple);
+		
+		byte[] cert = new byte[163 + signature.length];
+		System.arraycopy(byteTuple, 0, cert, 0, byteTuple.length);
+		System.arraycopy(signature, 0, cert, byteTuple.length, signature.length);
+		return cert;
 	}
 
+	/* TODO: Change exp to short
+	 * 
+	 */
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey, long exp) {
-		// TODO: encode certificate
-		byte[] encoded = new byte[64];
-		return signRaw(encoded);
+		byte[] byteTuple = new byte[171]; //TODO: Check length
+		byteTuple[0] = type.code;
+		byte[] pk = publicKey.getEncoded();
+		System.arraycopy(pk, 0, byteTuple, 1, pk.length);
+		byte[] expbytes = ByteBuffer.allocate(8).putLong(exp).array();
+		
+		System.arraycopy(expbytes, 0, byteTuple, 1 + pk.length, expbytes.length);
+		
+		byte[] signature = signRaw(byteTuple);
+		
+		byte[] cert = new byte[171 + signature.length];
+		System.arraycopy(byteTuple, 0, cert, 0, byteTuple.length);
+		System.arraycopy(signature, 0, cert, byteTuple.length, signature.length);
+		return cert;
 	}
 
 	/* Sign a raw piece of bytes
