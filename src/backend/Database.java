@@ -23,10 +23,6 @@ public class Database {
 					+ e.getMessage());
 			System.exit(0);
 		}
-<<<<<<< HEAD
-		//System.out.println("Success");
-=======
->>>>>>> origin/master
 	}
 
 	/**
