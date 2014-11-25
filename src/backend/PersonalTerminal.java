@@ -26,7 +26,7 @@ public class PersonalTerminal {
 	public static void main(String[] args){
 		//InitData nc = new InitData(cert, keypair.getPrivate(), certVerifKey);
 		Backend bk = new Backend();
-		InitData nc = bk.registerNewCard(9, 1);
+		InitData nc = bk.registerNewCard(9, (short) 1);
 		
 		byte[] pk = nc.privateKey;
 		byte[] c = nc.certificate;

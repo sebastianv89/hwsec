@@ -27,10 +27,8 @@ public class Backend {
 	 * @param customerId
 	 *            customer id, link card to this customer
 	 * @return certificate and secret key of the card
-	 * 
-	 * @Fitria: add km to the function
 	 */
-	public InitData registerNewCard(int customerId, short km) {
+	public InitData registerNewCard(int customerId) {
 		// generate a new (random) keypair
 		KeyPair keypair = new KeyPair();
 		long exp = getExpirationDate();
@@ -42,8 +40,8 @@ public class Backend {
 		// get the CA verification key
 		byte[] certVerifKey = ca.getVerificationKey();
 
-		// add smartcard to database   //@Fitria add km
-		db.addSmartcard(customerId, km, exp, keypair.getPublic());
+		// add smartcard to database
+		db.addSmartcard(customerId, exp, keypair.getPublic());
 
 		return new InitData(cert, keypair.getPrivate(), certVerifKey);
 	}
@@ -120,7 +118,7 @@ public class Backend {
 	public byte[] renewCertificate(byte[] cert) throws RevokedException {
 		// TODO: extract id (public key?) from certificate
 		// check the revocation status in the database
-		byte[] publicKey = new byte[1];
+		byte[] publicKey = cert;
 		if (db.isRevoked(publicKey)) {
 			throw new RevokedException();
 		}

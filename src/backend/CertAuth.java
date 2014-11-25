@@ -1,5 +1,6 @@
 package backend;
 
+<<<<<<< HEAD
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.PublicKey;
@@ -8,6 +9,10 @@ import java.security.interfaces.RSAPublicKey;
 
 import javax.crypto.Cipher;
 
+=======
+import java.security.interfaces.RSAPublicKey;
+
+>>>>>>> 9a0e28124a07c1b822c85ac6fa5b1ad32730a5eb
 /** Certificate authority */
 public class CertAuth {
 
@@ -15,8 +20,17 @@ public class CertAuth {
 		SMARTCARD, RENTALTERM, VEHICLETERM
 	};
 
+<<<<<<< HEAD
 	private RSAPublicKey capubkey;
 	private RSAPrivateKey caprivkey;
+=======
+	/**
+	 * Hard-coded(!) signature key of the CA (SK_{CA})
+	 */
+	private static final byte[] signKey = new byte[] { (byte) 0xca,
+			(byte) 0xfe, (byte) 0xba, (byte) 0xbe };
+	private byte[] verifKey;
+>>>>>>> 9a0e28124a07c1b822c85ac6fa5b1ad32730a5eb
 
 	public CertAuth() {
 		// TODO: read keys from files
@@ -49,13 +63,13 @@ public class CertAuth {
 		return verifKey.clone();
 	}
 
-	public byte[] makeCert(TYPE type, byte[] publicKey) {
+	public byte[] makeCert(TYPE type, RSAPublicKey publicKey) {
 		// TODO: encode certificate
 		byte[] encoded = new byte[64];
 		return signRaw(encoded);
 	}
 
-	public byte[] makeCert(TYPE type, byte[] publicKey, long exp) {
+	public byte[] makeCert(TYPE type, RSAPublicKey publicKey, long exp) {
 		// TODO: encode certificate
 		byte[] encoded = new byte[64];
 		return signRaw(encoded);

@@ -1,5 +1,7 @@
 package backend;
 
+import java.security.interfaces.RSAPrivateKey;
+
 /**
  * Wrapper class for the initial data that is to be sent to the
  * smartcard/terminal upon initialization.
@@ -9,19 +11,19 @@ package backend;
 public class InitData {
 	
 	public byte[] certificate;
-	public byte[] privateKey;
+	public RSAPrivateKey privateKey;
 	public byte[] secretKey;
 	public byte[] caVerifKey;
 
-	public InitData(byte[] certificate, byte[] privateKey) {
+	public InitData(byte[] certificate, RSAPrivateKey privateKey) {
 		this(certificate, privateKey, null, null);
 	}
 	
-	public InitData(byte[] certificate, byte[] privateKey, byte[] caVerifKey) {
+	public InitData(byte[] certificate, RSAPrivateKey privateKey, byte[] caVerifKey) {
 		this(certificate, privateKey, null, caVerifKey);
 	}
 
-	public InitData(byte[] certificate, byte[] privateKey, byte[] secretKey,
+	public InitData(byte[] certificate, RSAPrivateKey privateKey, byte[] secretKey,
 			byte[] caVerifKey) {
 		this.certificate = certificate;
 		this.privateKey = privateKey;
