@@ -1,5 +1,6 @@
 package backend;
 
+import java.security.interfaces.RSAPublicKey;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -116,13 +117,13 @@ public class Database {
 	 * 
 	 * @Max: Total kilometers is always 0 when you add a new smartcard so removed it again
 	 */
-	public void addSmartcard(int customerId, long expiration, byte[] publicKey) {
+	public void addSmartcard(int customerId, long expiration, RSAPublicKey publicKey) {
 		Statement stmt;
 		try {
 			stmt = conn.createStatement();
 			stmt.executeUpdate( "INSERT INTO card (customerId, totalKm, expiration, revocation, publicKey) "
 					+ "VALUES (\"" + customerId + "\", \"0\", \"" + expiration + "\", \"" +
-					false + "\", \"" + publicKey + "\");"  );
+					false + "\", \"" + publicKey.toString() + "\");"  );
 		    stmt.close();
 		    conn.commit();
 		} catch (SQLException e) {
@@ -181,7 +182,7 @@ public class Database {
 	 * 
 	 * @return terminal id
 	 */
-	public int addVehicleTerminal(byte[] publicKey, byte[] secretKey) {
+	public int addVehicleTerminal(RSAPublicKey publicKey, byte[] secretKey) {
 		// TODO: implement
 		// sql("INSERT INTO vehicleTerms ('publicKey', 'secretKey') VALUES
 		// $publicKey, $secretKey");
