@@ -12,6 +12,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 
 
@@ -25,20 +26,23 @@ public class CertAuth {
 		SMARTCARD, RENTALTERM, VEHICLETERM
 	};
 
-//	private RSAPublicKey capubkey;
+	private RSAPublicKey capubkey;
 	private static RSAPrivateKey caprivkey;
+	private String CAPrivateKeyFile = "CAPrivateKey"; // Path to the CA private key
+	private String CAPublicKeyFile = "CAPublicKey";
 	
 	public CertAuth() {
-			String CAPrivateKeyFile = "CAPrivateKey"; // Path to the CA private key
+
 
 			// Get the private key from file.
 			caprivkey = (RSAPrivateKey) readPrivateKey(CAPrivateKeyFile);
+			capubkey = (RSAPublicKey) readPublicKey(CAPublicKeyFile);
 
 	}
 
-//	public byte[] getVerificationKey() {
-//		return verifKey.clone();
-//	}
+	public RSAPublicKey getVerificationKey() {
+		return readPublicKey(CAPublicKeyFile);
+	}
 
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey) {
 		// TODO: encode certificate
@@ -52,7 +56,7 @@ public class CertAuth {
 		return signRaw(encoded);
 	}
 
-	/** Sign a raw piece of bytes
+	/* Sign a raw piece of bytes
 	 * 
 	 * To verify use:
 	 * Signature sig = Signature.getInstance("MD5WithRSA");
@@ -115,8 +119,8 @@ public class CertAuth {
 		return privkey;
    }
    
-   /* This function is not used here but you can copy-paste it to your other classes if you need to read a public keyfile
-    * 	   public static RSAPublicKey readPublicKey(String filename) { 
+   
+   public static RSAPublicKey readPublicKey(String filename) { 
 	   RSAPublicKey pubkey = null;
 	   FileInputStream file;
 		try {
@@ -140,8 +144,6 @@ public class CertAuth {
 		}
 		return pubkey;
    }
-    */
-
    
    
 }

@@ -8,6 +8,9 @@ import java.security.interfaces.*;
 
 /**
  * Wrapper class for a public crypto keypair.
+ * 
+ * Make a new keypair to generate new keys. These are not stored anywhere so make sure
+ * to store the public key in the database (this should only be done by the backend!!!)
  */
 public class KeyPair {
 	
@@ -20,42 +23,15 @@ public class KeyPair {
 	 * Generate a new random public keypair
 	 */
 	public KeyPair() {
-//		privateKey = new byte[KEYSIZE];
-//		FileInputStream urandom = null;
-//		try {
-//			urandom = new FileInputStream("/dev/urandom");
-//			// read from /dev/urandom until the buffer privateKey is full
-//			urandom.read(privateKey);
-//		} catch (IOException e) {
-//			System.err.println("Unable to read from /dev/urandom: "
-//					+ e.getMessage());
-//			System.exit(1);
-//		} finally {
-//			try {
-//				if (urandom != null) {
-//					urandom.close();
-//				}
-//			} catch (IOException e) {
-//				// not really a problem
-//				System.err.println("Unable to close /dev/unrandom: "
-//						+ e.getMessage());
-//			}
-//		}
-//		derivePublicKey();
 		
 	      try {
 	          /* Generate keypair. */
 	          KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
 	          generator.initialize(1024);
 	          java.security.KeyPair keypair = generator.generateKeyPair();
-	          RSAPublicKey publickey = (RSAPublicKey)keypair.getPublic();
-	          RSAPrivateKey privatekey = (RSAPrivateKey)keypair.getPrivate();
+	          publickey = (RSAPublicKey)keypair.getPublic();
+	          privatekey = (RSAPrivateKey)keypair.getPrivate();
 
-	          //TODO: Now we have a pub and priv key, how to store that?
-
-	          System.out.println("modulus = " + publickey.getModulus());
-	          System.out.println("pubexpint = " + publickey.getPublicExponent());
-	          System.out.println("privexpint = " + privatekey.getPrivateExponent());
 	       } catch (Exception e) {
 	          e.printStackTrace();
 	       }
@@ -76,13 +52,12 @@ public class KeyPair {
 	
 	/**	Initialize a keypair with the provided values 
 	 * 
-	 * Max: I think this can go as well
-	 * 
 	 * */
-//	public KeyPair(byte[] privateKey, byte[] publicKey) {
+	public KeyPair(byte[] privateKey, byte[] publicKey) {
+		//TODO: Decode the byte arrays into RSA...Key
 //		this.privatekey = privateKey;
 //		this.publickey = publicKey;
-//	}
+	}
 
 	public RSAPrivateKey getPrivate() {
 		return privatekey;
@@ -90,11 +65,6 @@ public class KeyPair {
 
 	public RSAPublicKey getPublic() {
 		return publickey;
-	}
-	
-	private void derivePublicKey() {
-		// TODO: implement
-		publicKey = new byte[KEYSIZE];
 	}
 
 }
