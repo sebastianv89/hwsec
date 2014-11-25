@@ -3,6 +3,9 @@ package backend;
 import java.util.Calendar;
 import java.util.Date;
 
+/* Add function: createCustomer -> return the customer id
+ * 
+ */
 
 /**
  * Wrapper class for the Backend System. This class serves as an interface for

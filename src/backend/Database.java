@@ -71,13 +71,37 @@ public class Database {
 		return name;
 	}
 
-	public void insertCustomer(String customerName) {
+	public Integer insertCustomer(String customerName) {
 	    Statement stmt;
+	    Integer customerId = -1;
 		try {
-			stmt = conn.createStatement();
-			stmt.executeUpdate( "INSERT INTO customer (name) VALUES (\"" + customerName + "\");"  );
-		    stmt.close();
-		    conn.commit();
+
+		    // Check if someone with this name already exists
+		    stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery( "SELECT id FROM card WHERE name = \"" + customerName + "\");" );
+		      while ( rs.next() ) {
+		         customerId = rs.getInt("id");
+		      }
+		      rs.close();
+		      stmt.close();
+		      
+		      if (customerId == -1) {
+				stmt = conn.createStatement();
+				stmt.executeUpdate( "INSERT INTO customer (name) VALUES (\"" + customerName + "\");"  );
+				stmt.close();
+				conn.commit();
+				
+				// Now get the id of the newly inserted customer
+				stmt = conn.createStatement();
+				ResultSet rs2 = stmt.executeQuery( "SELECT id FROM card WHERE name = \"" + customerName + "\");" );
+			      while ( rs2.next() ) {
+			         customerId = rs2.getInt("id");
+			      }
+			      rs2.close();
+			      stmt.close();
+				
+		      }
+		      return customerId;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -89,13 +113,15 @@ public class Database {
 	 * 
 	 * @Fitria edit 24/11/14: 
 	 * add totalKm in the insert function
+	 * 
+	 * @Max: Total kilometers is always 0 when you add a new smartcard so removed it again
 	 */
-	public void addSmartcard(int customerId, int kilometers, long expiration, byte[] publicKey) {
+	public void addSmartcard(int customerId, long expiration, byte[] publicKey) {
 		Statement stmt;
 		try {
 			stmt = conn.createStatement();
 			stmt.executeUpdate( "INSERT INTO card (customerId, totalKm, expiration, revocation, publicKey) "
-					+ "VALUES (\"" + customerId + "\", \"" + kilometers + "\", \"" + expiration + "\", \"" +
+					+ "VALUES (\"" + customerId + "\", \"0\", \"" + expiration + "\", \"" +
 					false + "\", \"" + publicKey + "\");"  );
 		    stmt.close();
 		    conn.commit();
