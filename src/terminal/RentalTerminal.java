@@ -35,16 +35,54 @@ public class RentalTerminal {
 			Scanner scName = new Scanner(System.in);
 		    String custName = scName.nextLine();
 		    
-		    System.out.println("Input the kilometers: ");
-		    Scanner scKm = new Scanner(System.in);
-		    int kilometers = scKm.nextInt();
-		    
-		    rt.RegisterNewCustomer(custName, (short)kilometers);
+		    rt.RegisterNewCustomer(custName);
+		    System.out.println("Congratulation you have been registered");
+		    System.out.println("Name : " + custName);
 		    
 		}else if(menu.equals("2")){
-			//Insert SmartCard, get cardID and km from card
-			//HardCoded CardID
-			byte[] card = new byte[] { (byte) 0xca,	(byte) 0xfb, (byte) 0xba, (byte) 0xbe };
+			System.out.println("Menu Top Up");
+			//Insert SmartCard, get cert from card
+			/*TODO: get cert. 
+			 * Do mutual auth;
+			 *  
+			*/
+			
+		    //Do Mutual Authentication --> check the card data
+		    if(rt.MutualAuthenticationRT_S()){
+		    	//read certificate from the card --> after Mutual Authentication of RT and S  
+				byte[] cardCert = new byte[163];
+				//Get the card data from the database
+				Card cardDB = rt.getCardDB(cardCert);
+				if(cardDB!=null){
+				    System.out.println(cardDB.getKilometers());
+					
+					System.out.print("Input the kilometers that you want to add: ");
+				    Scanner scKm = new Scanner(System.in);
+				    short kilometers = (short) scKm.nextInt();
+				    
+				    Card card_new = rt.topUpCard(cardCert, cardDB, kilometers);
+					System.out.println(card_new.getKilometers());
+				}
+		    }else{
+		    	System.out.println("Authentication failed. Card is not recognized.");
+		    }
+		}else if(menu.equals("3")){
+			System.out.println("Menu Refund");
+			if(rt.MutualAuthenticationRT_S()){
+				//HardCoded CardPublicKey and km  --> supposed to be read from the card --> after Mutual Authentication of RT and S  
+				byte[] cardPK = new byte[] { (byte) 0xca, (byte) 0xfe, (byte) 0xba, (byte) 0xbe };
+				
+				//Get Card data from database
+				Card card = rt.getCardDB(cardPK);
+				if(card != null){
+					System.out.println(card.getKilometers());
+					
+				}
+			}else{
+				System.out.println("Authentication failed. Card is not recognized.");
+			}
+			
 		}
+
 	}
 }
