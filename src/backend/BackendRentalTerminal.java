@@ -17,14 +17,14 @@ public class BackendRentalTerminal {
 		
 	}
 	
-	public void RegisterNewCustomer(String name, short km){
+	public void RegisterNewCustomer(String name){
 		//add to database customer
-		db.insertCustomer(name);
+		Integer customerId = db.insertCustomer(name);
 		//get the customer ID that just inserted
-		int id = db.getLastID();		
+//		int id = db.getLastID();		
 		
 		//add new smartcard
-		InitData init = be.registerNewCard(id, km);
+		InitData init = be.registerNewCard(customerId);
 	}
 
 }
