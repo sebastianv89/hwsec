@@ -51,7 +51,14 @@ public class CertAuth {
 	public RSAPublicKey getVerificationKey() {
 		return capubkey;
 	}
-
+	
+	/*
+	 * Certificate for the terminals should not have an expdate
+	 * Certificate WITOUT expdate is a byte array that looks like:
+	 * cert[0] = type (0 = smartcard, 1 = rentalterm, 2 = vehicleterm)
+	 * cert[1..163] = rsapublickey (length 162bytes)
+	 * cert[164...292] = Signature (128bytes)
+	 */
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey) {
 		byte[] byteTuple = new byte[163]; //TODO: Check length
 		byteTuple[0] = type.code;
@@ -67,18 +74,22 @@ public class CertAuth {
 	}
 
 	/* TODO: Change exp to short
-	 * 
+	 * Certificate with expdate is a byte array that looks like:
+	 * cert[0] = type (0 = smartcard, 1 = rentalterm, 2 = vehicleterm)
+	 * cert[1..163] = rsapublickey (length 162bytes)
+	 * cert[164..172] = expiration date of type long (8bytes)
+	 * cert[173...301] = Signature (128bytes)
 	 */
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey, long exp) {
 		byte[] byteTuple = new byte[171]; //TODO: Check length
 		byteTuple[0] = type.code;
-		byte[] pk = publicKey.getEncoded();
+		byte[] pk = publicKey.getEncoded(); //pubkey = 162bytes
 		System.arraycopy(pk, 0, byteTuple, 1, pk.length);
 		byte[] expbytes = ByteBuffer.allocate(8).putLong(exp).array();
 		
 		System.arraycopy(expbytes, 0, byteTuple, 1 + pk.length, expbytes.length);
 		
-		byte[] signature = signRaw(byteTuple);
+		byte[] signature = signRaw(byteTuple); //signature = 128bytes
 		
 		byte[] cert = new byte[171 + signature.length];
 		System.arraycopy(byteTuple, 0, cert, 0, byteTuple.length);
