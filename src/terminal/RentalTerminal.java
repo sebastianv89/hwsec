@@ -41,11 +41,12 @@ public class RentalTerminal {
 		    
 		}else if(menu.equals("2")){
 			System.out.println("Menu Top Up");
-			//Insert SmartCard, get cert from card
-			/*TODO: get cert. 
-			 * Do mutual auth;
-			 *  
-			*/
+			/*ALGO: 1. get cardCert from S
+			 * 		2. do mutual authentication between Rental Terminal - Smartcard 
+			 * 		3. get card data from database
+			 * 		4. update kilometers and certificate
+			 * 		5. update database + update card certificate and kilometers
+			 */
 			
 		    //Do Mutual Authentication --> check the card data
 		    if(rt.MutualAuthenticationRT_S()){
@@ -68,9 +69,10 @@ public class RentalTerminal {
 		    }
 		}else if(menu.equals("3")){
 			System.out.println("Menu Refund");
+			
 			if(rt.MutualAuthenticationRT_S()){
 				//HardCoded CardPublicKey and km  --> supposed to be read from the card --> after Mutual Authentication of RT and S  
-				byte[] cardPK = new byte[] { (byte) 0xca, (byte) 0xfe, (byte) 0xba, (byte) 0xbe };
+				byte[] cardPK = new byte[126]; 
 				
 				//Get Card data from database
 				Card card = rt.getCardDB(cardPK);
