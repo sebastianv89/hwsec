@@ -54,7 +54,11 @@ public class Database {
 	    
 		try {
 			stmt = conn.createStatement();
-			rs = stmt.executeQuery( "SELECT * FROM card WHERE publicKey = \"" + pubKey.getEncoded() + "\");" );
+			rs = stmt.executeQuery("SELECT card.id as id, card.customerID as custID, "
+					+ "customer.name as custName, card.totalKm as km, card.expiration as exp, "
+					+ "card.revocation as revoke, card.publicKey as cardPK "
+					+ "FROM card, customer "
+					+ "WHERE card.customerID = customer.id and card.publicKey = \"" + pubKey.getEncoded()  + "\"" );
 		    //rs.close();
 		    //stmt.close();
 		} catch (SQLException e) {
@@ -232,27 +236,27 @@ public class Database {
 		return 0;
 	}
 	
-	/*
-	 * @fitria
-	 * select the latest id from database customer
-	 * Need for RentalTerminal_classes.RegisterNewCustomer
-	 * Use case: Register Customer
+	/**
+	 * @Fitria
+	 * for Use case Top Up 
+	 * when the kilometers is top up, the expiration date is also expanded
+	 * @param kmNew : new value of kilometers
+	 * @param expirationNew : new value of expiration date
+	 * @param id : id of the rows that will be updated
+	 * @return states: equal to true if succeed, false otherwise 
 	 */
-	public int getLastID() {
+	public boolean updateKilometersExpiration(int kmNew, long expirationNew, int id){
+		boolean states = false;
 		Statement stmt;
-	    int id = 0;
 		try {
 			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery("select max(id) as id from customer" );
-			while(rs.next())
-				id = rs.getInt("id");
-		    rs.close();
+			stmt.executeUpdate("update card set totalKM = "+ kmNew +", expiration = "+ expirationNew +" where id = " + id);
 		    stmt.close();
+		    states = true;
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return id;
-	}	
+		return states;
+	}
 
 }
