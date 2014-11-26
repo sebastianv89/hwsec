@@ -1,6 +1,10 @@
 package backend;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -32,14 +36,27 @@ public class Database {
 	 * @param publicKey
 	 * @return 
 	 */
-	public ResultSet selectCard(byte[] publicKey) {
+	public ResultSet selectCard(byte[] bPublicKey) {
 	    Statement stmt;
 	    ResultSet rs = null;
+	    RSAPublicKey pubKey = null;
+	    try {
+	    	X509EncodedKeySpec pubspec = new X509EncodedKeySpec(bPublicKey);
+			KeyFactory factory = KeyFactory.getInstance("RSA");
+			pubKey = (RSAPublicKey) factory.generatePublic(pubspec);
+	    } catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    
 		try {
 			stmt = conn.createStatement();
-			rs = stmt.executeQuery( "SELECT * FROM card WHERE publicKey = \"" + publicKey + "\");" );
+			rs = stmt.executeQuery( "SELECT * FROM card WHERE publicKey = \"" + pubKey.getEncoded() + "\");" );
 		    //rs.close();
-		    stmt.close();
+		    //stmt.close();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -123,7 +140,7 @@ public class Database {
 			stmt = conn.createStatement();
 			stmt.executeUpdate( "INSERT INTO card (customerId, totalKm, expiration, revocation, publicKey) "
 					+ "VALUES (\"" + customerId + "\", \"0\", \"" + expiration + "\", \"" +
-					false + "\", \"" + publicKey.toString() + "\");"  );
+					false + "\", \"" + publicKey.getEncoded() + "\");"  );
 		    stmt.close();
 		    conn.commit();
 		} catch (SQLException e) {
