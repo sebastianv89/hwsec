@@ -20,7 +20,12 @@ public class VehicleTerminal {
 		byte[] vk = id.caVerifKey;
 		byte[] sk = id.secretKey;
 		byte[] pk = id.privateKey;
+		
 	}
+	// VT -> S:cert_VT, nounce
+	// S -> RT:{|cert_S,{<nounce, K_tmp>}SK_s|}EK_VT
+	// RT : checks that expiration <= current time
+	// RT -> S:{K_VT,S}K_tmp
 	
 		
 		public boolean isCardPresent() {
