@@ -172,12 +172,27 @@ public class Database {
 	 * @param publicKey		Used for identifying the correct card
 	 * @return the status of the revoked flag (true = revoked, false = not revoked)
 	 */
-	public boolean isRevoked(byte[] publicKey) {
+	//TODO: NOT DONE YET!!!!
+	public boolean isRevoked(byte[] bPublicKey) {
 	    Statement stmt;
 	    String rev = "";
+	    RSAPublicKey pubKey = null;
+	    try {
+	    	X509EncodedKeySpec pubspec = new X509EncodedKeySpec(bPublicKey);
+			KeyFactory factory = KeyFactory.getInstance("RSA");
+			pubKey = (RSAPublicKey) factory.generatePublic(pubspec);
+	    } catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    
+	    
 		try {
 			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery( "SELECT revoked FROM card WHERE publicKey = \"" + publicKey + "\");" );
+			ResultSet rs = stmt.executeQuery( "SELECT revoked FROM card WHERE publicKey = \"" + pubKey.getEncoded() + "\");" );
 		      while ( rs.next() ) {
 		         rev = rs.getString("revoked");
 		      }
