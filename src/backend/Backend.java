@@ -115,10 +115,16 @@ public class Backend {
 	 * @throws RevokedException
 	 *             If the smartcard was revoked
 	 */
+	//TODO: NOT DONE YET!!!!
 	public byte[] renewCertificate(byte[] cert) throws RevokedException {
 		// TODO: extract id (public key?) from certificate
 		// check the revocation status in the database
-		byte[] publicKey = cert;
+		
+		// first get the pubkey fromt the cert
+		byte[] publicKey;
+		System.arraycopy(cert, 1, pubKey, 0, 162);
+		
+		
 		if (db.isRevoked(publicKey)) {
 			throw new RevokedException();
 		}
