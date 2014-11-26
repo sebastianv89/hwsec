@@ -1,9 +1,6 @@
 package terminal;
 
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Scanner;
 
 import backend.BackendRentalTerminal;
@@ -68,22 +65,24 @@ public class RentalTerminal {
 		    	System.out.println("Authentication failed. Card is not recognized.");
 		    }
 		}else if(menu.equals("3")){
+			//Refund is topup with 0
+			//QUESTION: do we need to revoke the key at refund?
 			System.out.println("Menu Refund");
 			
-			if(rt.MutualAuthenticationRT_S()){
-				//HardCoded CardPublicKey and km  --> supposed to be read from the card --> after Mutual Authentication of RT and S  
-				byte[] cardPK = new byte[126]; 
+			//Do Mutual Authentication --> check the card data
+		    if(rt.MutualAuthenticationRT_S()){
+		    	//read certificate from the card --> after Mutual Authentication of RT and S  
+				byte[] cardCert = new byte[163];
 				
-				//Get Card data from database
-				Card card = rt.getCardDB(cardPK);
-				if(card != null){
-					System.out.println(card.getKilometers());
-					
+				//Get the card data from the database
+				Card cardDB = rt.getCardDB(cardCert);
+				if(cardDB!=null){
+				    System.out.println(cardDB.getKilometers());
+				    rt.refundKilometers(cardCert, cardDB);
 				}
-			}else{
-				System.out.println("Authentication failed. Card is not recognized.");
-			}
-			
+		    }else{
+		    	System.out.println("Authentication failed. Card is not recognized.");
+		    }
 		}
 
 	}
