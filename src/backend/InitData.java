@@ -11,7 +11,7 @@ import java.security.interfaces.RSAPrivateKey;
 public class InitData {
 	
 	public byte[] certificate;
-	public RSAPrivateKey privateKey;
+	public byte[] privateKey;
 	public byte[] secretKey;
 	public byte[] caVerifKey;
 
