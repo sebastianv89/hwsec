@@ -44,7 +44,7 @@ public class BackendRentalTerminal {
 			
 			/* Update the Card data (in a struct) */
 			card.setKilometers(card.getKilometers() + cardKm);
-			//TODO EXTRACT KILOMETERS FROM CERTIFICATES
+			//TODO EXTRACT EXP FROM CERTIFICATES
 			//card.setExpiration(expNew);
 			
 			/* update to database  */
@@ -79,9 +79,11 @@ public class BackendRentalTerminal {
 	}
 	
 	//Refund the kilometers
-	public Card refundKilometers(Card card){
-		
-		return card;
+	public void refundKilometers(byte[] cert, Card card){
+		/* update to database  */
+		db.updateKilometersExpiration(0, card.getExpDate(), card.getID());
+			
+		//TODO update to Card
 	}
 
 }
