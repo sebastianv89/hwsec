@@ -35,6 +35,7 @@ public class Database {
 	 * 
 	 * @param publicKey
 	 * @return 
+	 * @Fitria: change the query. Need to get the result from card and customer at once.
 	 */
 	public ResultSet selectCard(byte[] bPublicKey) {
 	    Statement stmt;
@@ -52,7 +53,7 @@ public class Database {
 			e.printStackTrace();
 		}
 	    
-		try {
+	    try {
 			stmt = conn.createStatement();
 			rs = stmt.executeQuery("SELECT card.id as id, card.customerID as custID, "
 					+ "customer.name as custName, card.totalKm as km, card.expiration as exp, "
@@ -192,7 +193,6 @@ public class Database {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	    
 	    
 		try {
 			stmt = conn.createStatement();
