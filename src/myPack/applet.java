@@ -7,6 +7,7 @@ package myPack;
  */
 
 
+import applet.RandomData;
 import javacard.framework.APDU;
 import javacard.framework.Applet;
 import javacard.framework.ISO7816;
@@ -36,6 +37,14 @@ public class applet extends Applet {
 	  //**Exceptions**//
 	 final static short NONCE_FAILURE = (short) 13000;
 	 final static short SIGNATURE_FAILURE = (short) 13001;
+	 //creating temp buffer on card
+	 byte[] tmp;
+		
+		short temp_short_1;
+		short temp_short_2;
+		
+		// The RandomData instance.
+		private RandomData random;
 	  
 	//----- installation and registration of the applet -----
 	  public static void install(byte[] buffer, short offset, byte length) {

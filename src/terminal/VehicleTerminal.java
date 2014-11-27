@@ -1,6 +1,7 @@
 package terminal;
 
 import java.util.List;
+import java.util.Random;
 
 import javax.smartcardio.CardException;
 import javax.smartcardio.CardTerminal;
@@ -9,6 +10,7 @@ import javax.smartcardio.TerminalFactory;
 
 import java.security.SecureRandom;
 
+import applet.APDU;
 import backend.Backend;
 import backend.InitData;
 
@@ -55,15 +57,37 @@ public class VehicleTerminal {
 		
 			return status;
 			
+			//generating random number (nounce)
 			SecureRandom random = new SecureRandom();
 			byte bytes[] = new bytes[20];
 			random.nextBytes(bytes);
 			
-			RandomData rnd = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
+			Random rnd = Random.getInstance(Random.ALG_SECURE_RANDOM);
 			rnd.generateData(RP, (short)0, (short)16);
 		}
 		
 
+public VehicleTerminal getVehicleTerminal() throws Exception{
+	VehicleTerminal vt = null;
+	TerminalFactory terminalfactory = TerminalFactory.getDefault();
+	VehicleTerminals vehicleTerminals = terminalFactory.terminals();
 	
+	if (vehicleTerminals.list().isEmpty() == false){
+}
 
+}
+
+// communication with the smartcard
+//have to create two temp buffer on smartcard for the process
+private void readBuffer(APDU apdu, byte[] dest, short offset, short length) {
+	byte[] buf = apdu.getBuffer();
+	temp_short_1 = apdu.setIncomingAndReceive();
+	temp_short_2 = 0;
+	Util.arrayCopy(buf, OFFSET_CDATA, dest, offset, temp_short_1);
+	while ((short) (temp_short_2 + temp_short_1) < length) {
+		temp_short_2 += temp_short_1;
+		offset += temp_short_1;
+		temp_short_1 = (short) apdu.receiveBytes(OFFSET_CDATA);
+		Util.arrayCopy(buf, OFFSET_CDATA, dest, offset, temp_short_1);
+	}
 }
