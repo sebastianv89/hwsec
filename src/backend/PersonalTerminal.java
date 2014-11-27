@@ -5,6 +5,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Scanner;
 
 import javax.swing.*;
 
@@ -33,6 +34,36 @@ public class PersonalTerminal {
 		byte[] ca = nc.caVerifKey;
 		
 		
+		//issuing certificate to the terminal on request by user either rental terminal or vehicle terminal
+		PersonalTerminal pt = new PersonalTerminal();
+		
+		System.out.println("Welcome to the Personilization Terminal");
+		System.out.println("1. Issue certificate for Rental Terminal");
+		System.out.println("2. Issue certificate for Vehicle Terminal");
+		System.out.println("3. EXIT");
+		System.out.println("Enter a number");
+		Scanner scan = new Scanner(System.in);
+		String menu = scan.nextLine();
+		if (menu.equals("1")){
+			bk.registerRentalTerminal();
+			byte[] c1 = nc.certificate;
+			byte[] pk1 = nc.privateKey;
+			System.out.println("Certificate issued successfully");
+			
+		}
+		else if (menu.equals("2")){
+			bk.registerVehicleTerminal();
+			byte[] c2 = nc.certificate;
+			byte[] pk2 = nc.privateKey;
+			byte[] sc2 = nc.secretKey;
+			byte[] ca2 = nc.caVerifKey;
+			System.out.println("Certificate issued successfully");
+			
+		}
+		else
+		{
+			System.out.println("Thank You");
+		}
 		
 		
 	}

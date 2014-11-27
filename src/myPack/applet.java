@@ -32,11 +32,18 @@ public class applet extends Applet {
 
 	  final static short SW_INVALID_TRANSACTION_AMOUNT = 0x6E84;
 	  final static short SW_NEGATIVE_BALANCE = 0x6E85;
+	  
+	  //**Exceptions**//
+	 final static short NONCE_FAILURE = (short) 13000;
+	 final static short SIGNATURE_FAILURE = (short) 13001;
+	  
 	//----- installation and registration of the applet -----
 	  public static void install(byte[] buffer, short offset, byte length) {
 	    memory = new byte[SIZE_MEMORY];  // this is the data storage area
 	    new applet().register();
 	  }  // install
+	  
+	  
 	  //----- this is the command dispatcher -----
 	  public void process(APDU apdu) {
 	    byte[] cmd_apdu = apdu.getBuffer();

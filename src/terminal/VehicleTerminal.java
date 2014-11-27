@@ -7,6 +7,8 @@ import javax.smartcardio.CardTerminal;
 import javax.smartcardio.CardTerminals;
 import javax.smartcardio.TerminalFactory;
 
+import java.security.SecureRandom;
+
 import backend.Backend;
 import backend.InitData;
 
@@ -29,14 +31,15 @@ public class VehicleTerminal {
 	
 		
 		public boolean isCardPresent() {
-			
-			SmartCard sc = bk.
-			List<SmartCard> sc;
+			//check if the card is present in the vehicle terminal
+			ReadWrite rw = new ReadWrite();
+			List<ReadWrite> rw;
 			try {
-				sc = ct.list(SmartCard.State.CARD_PRESENT);
-				for (CardTerminal c : sc) {
-					if (c.isCardPresent()){
+				rw = ct.list(ReadWrite.State.CARD_PRESENT);
+				for (VehicleTerminal v : rw) {
+					if (v.isCardPresent()){
 						return this.ready;
+						//if present it returns true and performs mutual authentication
 					}
 				}
 			} catch (CardException e) {
@@ -46,7 +49,19 @@ public class VehicleTerminal {
 			return false;
 		}
 
+		public boolean MutualAuthenticationVT_S(){
+			boolean status = true;
+			//check mutual authentication between vehicle terminal and card
 		
+			return status;
+			
+			SecureRandom random = new SecureRandom();
+			byte bytes[] = new bytes[20];
+			random.nextBytes(bytes);
+			
+			RandomData rnd = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
+			rnd.generateData(RP, (short)0, (short)16);
+		}
 		
 
 	
