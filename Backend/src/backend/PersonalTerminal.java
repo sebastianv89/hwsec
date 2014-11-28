@@ -27,7 +27,7 @@ public class PersonalTerminal {
 	public static void main(String[] args){
 		//InitData nc = new InitData(cert, keypair.getPrivate(), certVerifKey);
 		Backend bk = new Backend();
-		InitData nc = bk.registerNewCard(8);
+		InitData nc = bk.registerNewCard();
 		
 		byte[] pk = nc.privateKey;
 		byte[] c = nc.certificate;
@@ -40,7 +40,8 @@ public class PersonalTerminal {
 		System.out.println("Welcome to the Personilization Terminal");
 		System.out.println("1. Issue certificate for Rental Terminal");
 		System.out.println("2. Issue certificate for Vehicle Terminal");
-		System.out.println("3. EXIT");
+		System.out.println("3. Issue certificate for Smartcard ");
+		System.out.println("4. EXIT");
 		System.out.println("Enter a number");
 		Scanner scan = new Scanner(System.in);
 		String menu = scan.nextLine();
@@ -58,6 +59,10 @@ public class PersonalTerminal {
 			byte[] sc2 = nc.secretKey;
 			byte[] ca2 = nc.caVerifKey;
 			System.out.println("Certificate issued successfully");
+			
+		}else if(menu.equals("3")){
+			//add new smartcard
+			InitData init = bk.registerNewCard();
 			
 		}
 		else
