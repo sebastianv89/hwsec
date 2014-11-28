@@ -98,7 +98,7 @@ public class CertAuth {
 	}
 
 	/* Sign a raw piece of bytes
-	 * 
+	 *
 	 * To verify use:
 	 * Signature sig = Signature.getInstance("MD5WithRSA");
 	 * sig.initVerify(capubkey);
