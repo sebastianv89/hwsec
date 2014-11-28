@@ -37,21 +37,9 @@ public class Database {
 	 * @return 
 	 * @Fitria: change the query. Need to get the result from card and customer at once.
 	 */
-	public ResultSet selectCard(byte[] bPublicKey) {
+	public ResultSet selectCard(String strPublicKey) {
 	    Statement stmt;
 	    ResultSet rs = null;
-	    RSAPublicKey pubKey = null;
-	    try {
-	    	X509EncodedKeySpec pubspec = new X509EncodedKeySpec(bPublicKey);
-			KeyFactory factory = KeyFactory.getInstance("RSA");
-			pubKey = (RSAPublicKey) factory.generatePublic(pubspec);
-	    } catch (InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	    
 	    try {
 			stmt = conn.createStatement();
@@ -59,7 +47,7 @@ public class Database {
 					+ "customer.name as custName, card.totalKm as km, card.expiration as exp, "
 					+ "card.revocation as revoke, card.publicKey as cardPK "
 					+ "FROM card, customer "
-					+ "WHERE card.customerID = customer.id and card.publicKey = \"" + pubKey.getEncoded()  + "\"" );
+					+ "WHERE card.customerID = customer.id and card.publicKey = \"" + strPublicKey + "\"" );
 		    //rs.close();
 		    //stmt.close();
 		} catch (SQLException e) {
@@ -139,13 +127,13 @@ public class Database {
 	 * 
 	 * @Max: Total kilometers is always 0 when you add a new smartcard so removed it again
 	 */
-	public void addSmartcard(int customerId, long expiration, RSAPublicKey publicKey) {
+	public void addSmartcard(int customerId, long expiration, String strPublicKey) {
 		Statement stmt;
 		try {
 			stmt = conn.createStatement();
 			stmt.executeUpdate( "INSERT INTO card (customerId, totalKm, expiration, revocation, publicKey) "
 					+ "VALUES (\"" + customerId + "\", \"0\", \"" + expiration + "\", \"" +
-					false + "\", \"" + publicKey.getEncoded() + "\");"  );
+					false + "\", \"" + strPublicKey + "\");"  );
 		    stmt.close();
 		    conn.commit();
 		} catch (SQLException e) {
@@ -158,7 +146,7 @@ public class Database {
 	 * 
 	 * @param publicKey		Used for identifying the correct card
 	 */
-	public void revokeSmartcard(byte[] publicKey) {
+	public void revokeSmartcard(String publicKey) {
 	    Statement stmt;
 		try {
 			stmt = conn.createStatement();
@@ -178,25 +166,25 @@ public class Database {
 	 * @return the status of the revoked flag (true = revoked, false = not revoked)
 	 */
 	//TODO: NOT DONE YET!!!!
-	public boolean isRevoked(byte[] bPublicKey) {
+	public boolean isRevoked(String strPublicKey) {
 	    Statement stmt;
 	    String rev = "";
-	    RSAPublicKey pubKey = null;
-	    try {
-	    	X509EncodedKeySpec pubspec = new X509EncodedKeySpec(bPublicKey);
-			KeyFactory factory = KeyFactory.getInstance("RSA");
-			pubKey = (RSAPublicKey) factory.generatePublic(pubspec);
-	    } catch (InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//	    RSAPublicKey pubKey = null;
+//	    try {
+//	    	X509EncodedKeySpec pubspec = new X509EncodedKeySpec(bPublicKey);
+//			KeyFactory factory = KeyFactory.getInstance("RSA");
+//			pubKey = (RSAPublicKey) factory.generatePublic(pubspec);
+//	    } catch (InvalidKeySpecException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (NoSuchAlgorithmException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	    
 		try {
 			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery( "SELECT revoked FROM card WHERE publicKey = \"" + pubKey.getEncoded() + "\");" );
+			ResultSet rs = stmt.executeQuery( "SELECT revoked FROM card WHERE publicKey = \"" + strPublicKey + "\");" );
 		      while ( rs.next() ) {
 		         rev = rs.getString("revoked");
 		      }
@@ -218,7 +206,7 @@ public class Database {
 	 * 
 	 * @return terminal id
 	 */
-	public int addVehicleTerminal(RSAPublicKey publicKey, byte[] secretKey) {
+	public int addVehicleTerminal(String strPublicKey, String strPrivateKey) {
 		// TODO: implement
 		// sql("INSERT INTO vehicleTerms ('publicKey', 'secretKey') VALUES
 		// $publicKey, $secretKey");
