@@ -98,7 +98,7 @@ public class BackendRentalTerminal {
 			
 			/* Update the Card data (in a struct) */
 			card.setKilometers(card.getKilometers() + cardKm);
-			getExpFromCert(newCert)
+			byteUtil.bytesToLong(getExpFromCert(newCert));
 			//TODO EXTRACT EXP FROM CERTIFICATES
 			//card.setExpiration(expNew);
 			
