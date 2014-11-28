@@ -24,7 +24,8 @@ public class Backend {
 
 	private Database db;
 	private CertAuth ca;
-
+	ConstantValues CV = new ConstantValues();
+	
 	public Backend() {
 		db = new Database();
 		ca = new CertAuth();
@@ -102,8 +103,8 @@ public class Backend {
 	 *            Used to identify the smartcard
 	 */
 	public void revokeSmartcard(byte[] cert) {
-		byte[] publicKey = new byte[162];
-		System.arraycopy(cert, 1, publicKey, 0, 162); // bytes 1...162 are pubKey
+		byte[] publicKey = new byte[CV.RSAPUBLICKEYLENGTH];
+		System.arraycopy(cert, 1, publicKey, 0, CV.RSAPUBLICKEYLENGTH); // bytes 1...162 are pubKey
 		
 		Serialization serialize = new Serialization();
 		String strPublicKey = serialize.SerializeByteKey(publicKey);
@@ -126,8 +127,8 @@ public class Backend {
 	public byte[] renewCertificate(byte[] cert) throws RevokedException {
 		RSAPublicKey rsaPublicKey = null;
 		// first get the pubkey fromt the cert
-		byte[] publicKey = null;
-		System.arraycopy(cert, 1, publicKey, 0, 162);
+		byte[] publicKey = new byte[CV.RSAPUBLICKEYLENGTH];
+		System.arraycopy(cert, 1, publicKey, 0, CV.RSAPUBLICKEYLENGTH);
 		
 		Serialization serialize = new Serialization();
 		String strPublicKey = serialize.SerializeByteKey(publicKey);
