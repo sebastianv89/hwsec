@@ -28,6 +28,8 @@ public class RentalTerminal {
 		Scanner scan = new Scanner(System.in);
 	    String menu = scan.nextLine();
 		if(menu.equals("1")){
+			System.out.println("Menu Register New Customer");
+			
 			System.out.println("Input your name: ");
 			Scanner scName = new Scanner(System.in);
 		    String custName = scName.nextLine();
@@ -38,32 +40,13 @@ public class RentalTerminal {
 		    
 		}else if(menu.equals("2")){
 			System.out.println("Menu Top Up");
-			/*ALGO: 1. get cardCert from S
-			 * 		2. do mutual authentication between Rental Terminal - Smartcard 
-			 * 		3. get card data from database
-			 * 		4. update kilometers and certificate
-			 * 		5. update database + update card certificate and kilometers
-			 */
 			
-		    //Do Mutual Authentication --> check the card data
-		    if(rt.MutualAuthenticationRT_S()){
-		    	//read certificate from the card --> after Mutual Authentication of RT and S  
-				byte[] cardCert = new byte[163];
-				//Get the card data from the database
-				Card cardDB = rt.getCardDB(cardCert);
-				if(cardDB!=null){
-				    System.out.println(cardDB.getKilometers());
-					
-					System.out.print("Input the kilometers that you want to add: ");
-				    Scanner scKm = new Scanner(System.in);
-				    short kilometers = (short) scKm.nextInt();
-				    
-				    Card card_new = rt.topUpCard(cardCert, cardDB, kilometers);
-					System.out.println(card_new.getKilometers());
-				}
-		    }else{
-		    	System.out.println("Authentication failed. Card is not recognized.");
-		    }
+			System.out.print("Input the kilometers that you want to add: ");
+		    Scanner scKm = new Scanner(System.in);
+		    short kilometers = (short) scKm.nextInt();
+			
+		    rt.TopUpCard(kilometers);
+			
 		}else if(menu.equals("3")){
 			//Refund is topup with 0
 			//QUESTION: do we need to revoke the key at refund?
