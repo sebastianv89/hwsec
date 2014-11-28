@@ -28,9 +28,7 @@ public class BackendRentalTerminal {
 	Backend be = new Backend();
 	Serialization serial = new Serialization();
 	ByteUtils byteUtil = new ByteUtils();
-	
-	int EXP_LENGTH = 8;
-	int PUBKEY_LENGTH = 162;
+	ConstantValues CV = new ConstantValues();
 	
 	public BackendRentalTerminal(){
 		
@@ -171,15 +169,15 @@ public class BackendRentalTerminal {
 	
 	//get the expiration date from the certificate
 	private byte[] getExpFromCert(byte[] cert){
-		byte[] exp = new byte[EXP_LENGTH];
-		System.arraycopy(cert, 164, exp, 0, EXP_LENGTH);
+		byte[] exp = new byte[CV.EXP_LENGTH];
+		System.arraycopy(cert, 164, exp, 0, CV.EXP_LENGTH);
 		return exp;
 	}
 	
 	//get public key from certificate
 	private byte[] getPublicKeyFromCert(byte[] cert){
-		byte[] pubKey = new byte[PUBKEY_LENGTH];
-		System.arraycopy(cert, 1, pubKey, 0, PUBKEY_LENGTH);
+		byte[] pubKey = new byte[CV.RSAPUBLICKEYLENGTH];
+		System.arraycopy(cert, 1, pubKey, 0, CV.RSAPUBLICKEYLENGTH);
 		return pubKey;		
 	}
 	
