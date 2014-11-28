@@ -98,14 +98,14 @@ public class BackendRentalTerminal {
 			
 			/* Update the Card data (in a struct) */
 			card.setKilometers(card.getKilometers() + cardKm);
-			byteUtil.bytesToLong(getExpFromCert(newCert));
-			//TODO EXTRACT EXP FROM CERTIFICATES
-			//card.setExpiration(expNew);
+			//extract expiration date from the new certificate and convert it to Long
+			long expNew  = byteUtil.bytesToLong(getExpFromCert(newCert));
+			card.setExpiration(expNew);
 			
 			/* update to database  */
 			db.updateKilometersExpiration(card.getKilometers(), card.getExpDate(), card.getID());
 				
-			//TODO update to Card
+			//TODO update to the smartcard
 			
 		} catch (RevokedException e) {
 			// TODO Auto-generated catch block
