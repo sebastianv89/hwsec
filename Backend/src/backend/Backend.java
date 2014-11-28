@@ -1,8 +1,11 @@
 package backend;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -35,7 +38,7 @@ public class Backend {
 	 *            customer id, link card to this customer
 	 * @return certificate and secret key of the card
 	 */
-	public InitData registerNewCard(int i) {
+	public InitData registerNewCard() {
 		// generate a new (random) keypair
 		KeyPair keypair = new KeyPair();
 		long exp = getExpirationDate();
@@ -47,9 +50,8 @@ public class Backend {
 		// get the CA verification key
 		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
 
-//		// add smartcard to database
-//		db.addSmartcard(customerId, exp, keypair.getPublic());
-
+		// Dont need to store it since we have not given out the card yet!
+		
 		return new InitData(cert, keypair.getPrivate(), certVerifKey);
 	}
 
@@ -68,7 +70,7 @@ public class Backend {
 		byte[] cert = ca
 				.makeCert(CertAuth.TYPE.RENTALTERM, keypair.getPublic());
 
-		return new InitData(cert, keypair.getPrivate());
+		return new InitData(cert, keypair.getPrivate()); //Dont need pubkey because it is in the cert
 	}
 
 	/**
@@ -79,24 +81,16 @@ public class Backend {
 	public InitData registerVehicleTerminal() {
 		// generate a new (random) keypair
 		KeyPair keypair = new KeyPair();
-		// generate a secret key (used for logging)
-		RSAPrivateKey secretKey = keypair.getPrivate();
 
 		// get a certificate from the CA
 		byte[] cert = ca
 				.makeCert(CertAuth.TYPE.RENTALTERM, keypair.getPublic());
-
-		// add vehicle terminal to the database
-		Serialization serialize = new Serialization();
-		String strPublicKey = serialize.SerializePublicKey(keypair.getPublic());
-		String strPrivateKey = serialize.SerializePrivateKey(secretKey);
-		db.addVehicleTerminal(strPublicKey, strPrivateKey);
-
+		
 		// get the CA public verification key
 		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
 
 		// register vehicle terminal in the database
-		return new InitData(cert, keypair.getPrivate(), secretKey, certVerifKey);
+		return new InitData(cert, keypair.getPrivate(), certVerifKey);
 	}
 
 	/**
@@ -187,6 +181,22 @@ public class Backend {
 		c.add(Calendar.DATE, 21);
 		return c.getTimeInMillis(); // TODO: can't we make this a short, maybe a
 									// counter in days
+	}
+	
+   private static void writeKey(Key key, String filename) {
+	      FileOutputStream file;
+		try {
+			file = new FileOutputStream(filename);
+		    file.write(key.getEncoded());
+		    file.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 	
 }
