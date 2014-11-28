@@ -7,14 +7,14 @@ public class Card {
 	int kilometers;
 	long expiration;
 	int revocation;
-	byte[] cardPublicKey;
+	String cardPublicKey;
 	
 	public Card(){
 		
 	}
 	
 	public Card(int ID, int custID, String custName, int km, long exp, 
-			int revoke, byte[] cardPK){
+			int revoke, String cardPK){
 		this.id = ID;
 		this.customerID = custID;
 		this.customerName = custName;
@@ -55,7 +55,7 @@ public class Card {
 	public int getRevocationStates(){
 		return this.revocation;
 	}
-	public byte[] getCardPublicKey(){
+	public String getCardPublicKey(){
 		return this.cardPublicKey;
 	}
 	
