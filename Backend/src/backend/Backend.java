@@ -87,7 +87,7 @@ public class Backend {
 		Serialization serialize = new Serialization();
 		String strPublicKey = serialize.SerializePublicKey(keypair.getPublic());
 		String strPrivateKey = serialize.SerializePrivateKey(secretKey);
-		db.addVehicleTerminal(strPublicKey, secretKey);
+		db.addVehicleTerminal(strPublicKey, strPrivateKey);
 
 		// get the CA public verification key
 		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
@@ -142,8 +142,13 @@ public class Backend {
 		// get updated expiration date
 		long exp = getExpirationDate();
 		
+		// Convert bytes to RSAPublicKey
+		X509EncodedKeySpec pubspec = new X509EncodedKeySpec(publicKey);
+		KeyFactory factory = KeyFactory.getInstance("RSA");
+		RSAPublicKey rsaPublicKey = (RSAPublicKey) factory.generatePublic(pubspec);
+		
 		// return the new certificate
-		return ca.makeCert(CertAuth.TYPE.SMARTCARD, publicKey, exp);
+		return ca.makeCert(CertAuth.TYPE.SMARTCARD, rsaPublicKey, exp);
 	}
 	
 	// TODO: topup (protocol 6.10), lots of steps in that protocol
