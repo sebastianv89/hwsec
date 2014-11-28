@@ -22,6 +22,17 @@ import terminal.Card;
  * 		4. update database + update card certificate (if needed)
  */
 
+/*
+ * 		KeyPair kp = new KeyPair();
+		System.out.println(kp.getPublic().getPublicExponent());
+		System.out.println(getDigitCount(kp.getPublic().getPublicExponent())); //5bytes
+		System.out.println(kp.getPublic().getModulus()); //309bytes
+		System.out.println(getDigitCount(kp.getPublic().getModulus())); //309bytes
+		System.out.println(kp.getPrivate().getPrivateExponent()); //308bytes
+		System.out.println(getDigitCount(kp.getPrivate().getPrivateExponent()));
+		System.out.println(kp.getPrivate().getModulus());
+ */
+
 public class BackendRentalTerminal {
 	Database db = new Database();
 	Backend be = new Backend();
