@@ -1,6 +1,7 @@
 package backend;
 
 import java.security.KeyFactory;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Calendar;
@@ -76,14 +77,17 @@ public class Backend {
 		// generate a new (random) keypair
 		KeyPair keypair = new KeyPair();
 		// generate a secret key (used for logging)
-		byte[] secretKey = new SecretKey().secretKey;
+		RSAPrivateKey secretKey = keypair.getPrivate();
 
 		// get a certificate from the CA
 		byte[] cert = ca
 				.makeCert(CertAuth.TYPE.RENTALTERM, keypair.getPublic());
 
 		// add vehicle terminal to the database
-		db.addVehicleTerminal(keypair.getPublic(), secretKey);
+		Serialization serialize = new Serialization();
+		String strPublicKey = serialize.SerializePublicKey(keypair.getPublic());
+		String strPrivateKey = serialize.SerializePrivateKey(secretKey);
+		db.addVehicleTerminal(strPublicKey, secretKey);
 
 		// get the CA public verification key
 		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
@@ -102,7 +106,7 @@ public class Backend {
 	 */
 	public void revokeSmartcard(byte[] cert) {
 		byte[] publicKey;
-		System.arraycopy(cert, 1, publicKey, 0, 162);
+		System.arraycopy(cert, 1, publicKey, 0, 162); // bytes 1...162 are pubKey
 		
 		Serialization serialize = new Serialization();
 		String strPublicKey = serialize.SerializeByteKey(publicKey);
