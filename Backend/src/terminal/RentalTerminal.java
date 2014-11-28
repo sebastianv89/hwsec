@@ -45,7 +45,10 @@ public class RentalTerminal {
 		    Scanner scKm = new Scanner(System.in);
 		    short kilometers = (short) scKm.nextInt();
 			
-		    rt.TopUpCard(kilometers);
+		    Card card = rt.TopUpCard(kilometers);
+		    System.out.println("Name: "+ card.getCustomerName());
+		    System.out.println("Kilometers: " + card.getKilometers());
+		    System.out.println("Expiration date" + card.getExpDate());
 			
 		}else if(menu.equals("3")){
 			//Refund is topup with 0
