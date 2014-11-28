@@ -2,6 +2,8 @@ package backend;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import terminal.Card;
 
@@ -82,7 +84,6 @@ public class BackendRentalTerminal {
 	
 	/**
 	 * 
-	 * @param cardPublicKey: the public key that stored in the card
 	 * @param cardKm: the kilometers amount that stored in the card
 	 */
 	public Card TopUpCard(short cardKm){
@@ -98,12 +99,14 @@ public class BackendRentalTerminal {
 			
 			/* Update the Card data (in a struct) */
 			card.setKilometers(card.getKilometers() + cardKm);
-			//extract expiration date from the new certificate and convert it to Long
+			//extract expiration date from the new certificate and convert it to Long 
 			long expNew  = byteUtil.bytesToLong(getExpFromCert(newCert));
-			card.setExpiration(expNew);
+			//convert the long date to string
+			String expString = convertLongDateToString(expNew);
+			card.setExpiration(expString);
 			
 			/* update to database  */
-			db.updateKilometersExpiration(card.getKilometers(), card.getExpDate(), card.getID());
+			db.updateKilometersExpiration(card.getKilometers(), expNew, card.getID());
 				
 			//TODO update to the smartcard
 			
@@ -127,7 +130,7 @@ public class BackendRentalTerminal {
 		try {
 			if(rs.next()){
 				card = new Card(rs.getInt("id"), rs.getInt("custID"), rs.getString("custName"), 
-						rs.getInt("km"), rs.getLong("exp") , rs.getInt("revoke"), rs.getString("cardPK"));
+						rs.getInt("km"), convertLongDateToString(rs.getLong("exp")) , rs.getInt("revoke"), rs.getString("cardPK"));
 			}else{
 				System.out.println("That card has not been issued");
 				card = null;
@@ -148,17 +151,29 @@ public class BackendRentalTerminal {
 	}
 	
 	
+	//get the expiration date from the certificate
 	private byte[] getExpFromCert(byte[] cert){
 		byte[] exp = new byte[EXP_LENGTH];
 		System.arraycopy(cert, 164, exp, 0, EXP_LENGTH);
 		return exp;
 	}
 	
+	//get public key from certificate
 	private byte[] getPublicKeyFromCert(byte[] cert){
 		byte[] pubKey = new byte[PUBKEY_LENGTH];
 		System.arraycopy(cert, 1, pubKey, 0, PUBKEY_LENGTH);
-		return pubKey;
-		
+		return pubKey;		
 	}
+	
+	//convert long date to string date
+	private String convertLongDateToString(long expDate){
+	    Date date=new Date(expDate);
+	    SimpleDateFormat df2 = new SimpleDateFormat("dd/MM/yy");
+	    String dateText = df2.format(date);
+	    System.out.println(dateText);
+	    return dateText;
+	}
+	
+	
 
 }
