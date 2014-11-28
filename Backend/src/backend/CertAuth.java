@@ -23,7 +23,7 @@ import java.security.spec.X509EncodedKeySpec;
  * */
 public class CertAuth {
 
-	
+	ConstantValues CV = new ConstantValues();
 	
 	public enum TYPE {
 		SMARTCARD ((byte)0), RENTALTERM ((byte)1), VEHICLETERM ((byte)2);
@@ -60,7 +60,7 @@ public class CertAuth {
 	 * cert[164...292] = Signature (128bytes)
 	 */
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey) {
-		byte[] byteTuple = new byte[163]; //TODO: Check length
+		byte[] byteTuple = new byte[CV.RSAPUBLICKEYLENGTH + 1]; //TODO: Check length
 		byteTuple[0] = type.code;
 		byte[] pk = publicKey.getEncoded();
 		System.arraycopy(pk, 0, byteTuple, 1, pk.length);
@@ -81,17 +81,17 @@ public class CertAuth {
 	 * cert[173...301] = Signature (128bytes)
 	 */
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey, long exp) {
-		byte[] byteTuple = new byte[171]; //TODO: Check length
+		byte[] byteTuple = new byte[CV.PK_EXP_LENGTH+1]; //TODO: Check length //171
 		byteTuple[0] = type.code;
 		byte[] pk = publicKey.getEncoded(); //pubkey = 162bytes
 		System.arraycopy(pk, 0, byteTuple, 1, pk.length);
-		byte[] expbytes = ByteBuffer.allocate(8).putLong(exp).array();
+		byte[] expbytes = ByteBuffer.allocate(CV.EXP_LENGTH).putLong(exp).array();
 		
 		System.arraycopy(expbytes, 0, byteTuple, 1 + pk.length, expbytes.length);
 		
 		byte[] signature = signRaw(byteTuple); //signature = 128bytes
 		
-		byte[] cert = new byte[171 + signature.length];
+		byte[] cert = new byte[CV.PK_EXP_LENGTH+ 1 + signature.length];
 		System.arraycopy(byteTuple, 0, cert, 0, byteTuple.length);
 		System.arraycopy(signature, 0, cert, byteTuple.length, signature.length);
 		return cert;
