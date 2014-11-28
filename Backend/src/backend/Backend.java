@@ -1,8 +1,10 @@
 package backend;
 
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Calendar;
 import java.util.Date;
@@ -105,7 +107,7 @@ public class Backend {
 	 *            Used to identify the smartcard
 	 */
 	public void revokeSmartcard(byte[] cert) {
-		byte[] publicKey;
+		byte[] publicKey = null;
 		System.arraycopy(cert, 1, publicKey, 0, 162); // bytes 1...162 are pubKey
 		
 		Serialization serialize = new Serialization();
@@ -127,9 +129,9 @@ public class Backend {
 	 *             If the smartcard was revoked
 	 */
 	public byte[] renewCertificate(byte[] cert) throws RevokedException {
-		
+		RSAPublicKey rsaPublicKey = null;
 		// first get the pubkey fromt the cert
-		byte[] publicKey;
+		byte[] publicKey = null;
 		System.arraycopy(cert, 1, publicKey, 0, 162);
 		
 		Serialization serialize = new Serialization();
@@ -144,8 +146,18 @@ public class Backend {
 		
 		// Convert bytes to RSAPublicKey
 		X509EncodedKeySpec pubspec = new X509EncodedKeySpec(publicKey);
-		KeyFactory factory = KeyFactory.getInstance("RSA");
-		RSAPublicKey rsaPublicKey = (RSAPublicKey) factory.generatePublic(pubspec);
+		KeyFactory factory;
+		try {
+			factory = KeyFactory.getInstance("RSA");
+			rsaPublicKey = (RSAPublicKey) factory.generatePublic(pubspec);
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		
 		// return the new certificate
 		return ca.makeCert(CertAuth.TYPE.SMARTCARD, rsaPublicKey, exp);
