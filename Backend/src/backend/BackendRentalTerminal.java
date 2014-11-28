@@ -5,6 +5,21 @@ import java.sql.SQLException;
 
 import terminal.Card;
 
+/* TODO: Change exp to short
+ * Certificate with expdate is a byte array that looks like:
+ * cert[0] = type (0 = smartcard, 1 = rentalterm, 2 = vehicleterm)
+ * cert[1..163] = rsapublickey (length 162bytes)
+ * cert[164..172] = expiration date of type long (8bytes)
+ * cert[173...301] = Signature (128bytes)
+ */ 
+
+/*ALGO: 1. get cardCert from S
+ * 		2. do mutual authentication between Rental Terminal - Smartcard 
+ * 		3. get card data from database
+ * 		4. do the change (register, top up or refund)
+ * 		5. update database + update card certificate (if needed)
+ */
+
 public class BackendRentalTerminal {
 	Database db = new Database();
 	Backend be = new Backend();
@@ -18,14 +33,14 @@ public class BackendRentalTerminal {
 		
 	}
 	
-	public byte[] ReadCertFromSmartCard(){
+	private byte[] ReadCertFromSmartCard(){
 		byte[] cert = null;
 		
 		
 		return cert;
 	}
 	
-	public boolean MutualAuthenticationRT_S(){
+	private boolean MutualAuthenticationRT_S(){
 		boolean states = true;
 		//TODO:
 		//Check Mutual Authentication between Rental Terminal and SmartCards
@@ -34,24 +49,17 @@ public class BackendRentalTerminal {
 		
 	}
 	
-	/* TODO: Change exp to short
-	 * Certificate with expdate is a byte array that looks like:
-	 * cert[0] = type (0 = smartcard, 1 = rentalterm, 2 = vehicleterm)
-	 * cert[1..163] = rsapublickey (length 162bytes)
-	 * cert[164..172] = expiration date of type long (8bytes)
-	 * cert[173...301] = Signature (128bytes)
-	 */ 
-	
-	public void RegisterNewCustomer(String name){
-		/**
-		 * REGISTER NEW CUSTOMER
-		 * 1. Read cert from card
-		 * 2. renew the certificate to expand the expiration date
-		 * 3. Add customer and card data to database. NOTE: pubkey database is string
-		 */
-		
+	/**
+	 * REGISTER NEW CUSTOMER
+	 * 1. Read cert from card
+	 * 2. renew the certificate to expand the expiration date
+	 * 3. Add customer and card data to database. NOTE: pubkey database is string
+	 */
+	public void RegisterNewCustomer(String name){		
 		//1. read from the card 
 		byte[] cert = ReadCertFromSmartCard();
+		//TODO Do Mutual Authentication
+		
 		//2a. renew the certificate
 		byte[] newCert = null;
 		try {
@@ -61,10 +69,8 @@ public class BackendRentalTerminal {
 			e.printStackTrace();
 		}
 		//2b. extract the expiration date and pubkey from card certificate
-		byte[] exp = new byte[EXP_LENGTH];
-		byte[] pubKey = new byte[PUBKEY_LENGTH];
-		System.arraycopy(newCert, 164, exp, 0, EXP_LENGTH);
-		System.arraycopy(newCert, 1, pubKey, 0, PUBKEY_LENGTH);
+		byte[] exp = getExpFromCert(newCert);
+		byte[] pubKey = getPublicKeyFromCert(newCert);
 		String strPubKey = serial.SerializeByteKey(pubKey);
 		long expLong = byteUtil.bytesToLong(exp);
 		
@@ -79,8 +85,12 @@ public class BackendRentalTerminal {
 	 * @param cardPublicKey: the public key that stored in the card
 	 * @param cardKm: the kilometers amount that stored in the card
 	 */
-	public Card topUpCard(byte[] cert, Card card, short cardKm){
+	public Card TopUpCard(short cardKm){
+		byte[] cert = ReadCertFromSmartCard();
+		//TODO Do Mutual Authentication
+		
 		byte[] newCert = null;
+		Card card = getCardDB(cert);
 		
 		try {
 			/* renew the certificate */
@@ -88,6 +98,7 @@ public class BackendRentalTerminal {
 			
 			/* Update the Card data (in a struct) */
 			card.setKilometers(card.getKilometers() + cardKm);
+			getExpFromCert(newCert)
 			//TODO EXTRACT EXP FROM CERTIFICATES
 			//card.setExpiration(expNew);
 			
@@ -103,6 +114,11 @@ public class BackendRentalTerminal {
 		return card;
 	}
 	
+	/**
+	 * Get card data from database
+	 * @param cardPublicKey
+	 * @return
+	 */
 	public Card getCardDB(byte[] cardPublicKey){
 		Card card = new Card();
 		String strPubKey = serial.SerializeByteKey(cardPublicKey);
@@ -129,6 +145,20 @@ public class BackendRentalTerminal {
 		db.updateKilometersExpiration(0, card.getExpDate(), card.getID());
 			
 		//TODO update to Card
+	}
+	
+	
+	private byte[] getExpFromCert(byte[] cert){
+		byte[] exp = new byte[EXP_LENGTH];
+		System.arraycopy(cert, 164, exp, 0, EXP_LENGTH);
+		return exp;
+	}
+	
+	private byte[] getPublicKeyFromCert(byte[] cert){
+		byte[] pubKey = new byte[PUBKEY_LENGTH];
+		System.arraycopy(cert, 1, pubKey, 0, PUBKEY_LENGTH);
+		return pubKey;
+		
 	}
 
 }
