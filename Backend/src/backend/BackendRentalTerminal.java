@@ -96,12 +96,16 @@ public class BackendRentalTerminal {
 	/**
 	 * 
 	 * @param cardKm: the kilometers amount that stored in the card
+	 * NOTE: for the database, the kilometers saved is the total kilometers that ever added to the card
+	 * without the ticking
 	 */
 	public Card TopUpCard(short cardKm){
 		//1. read from the card and do mutual authentication
 		byte[] cert = MutualAuthenticationRT_S();
-		
+		short km = 0; //read this from card
 		byte[] newCert = null;
+		
+		/* Get card from database  */
 		Card card = getCardDB(cert);
 		
 		try {
@@ -119,7 +123,9 @@ public class BackendRentalTerminal {
 			/* update to database  */
 			db.updateKilometersExpiration(card.getKilometers(), expNew, card.getID());
 				
-			//TODO update to the smartcard
+			//TODO update to the smartcard 
+			short cardNewKm = (short) (km + cardKm);
+			
 			
 		} catch (RevokedException e) {
 			// TODO Auto-generated catch block
