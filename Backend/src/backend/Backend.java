@@ -108,7 +108,7 @@ public class Backend {
 	 *            Used to identify the smartcard
 	 */
 	public void revokeSmartcard(byte[] cert) {
-		byte[] publicKey = null;
+		byte[] publicKey = new byte[162];
 		System.arraycopy(cert, 1, publicKey, 0, 162); // bytes 1...162 are pubKey
 		
 		Serialization serialize = new Serialization();
@@ -163,9 +163,6 @@ public class Backend {
 		// return the new certificate
 		return ca.makeCert(CertAuth.TYPE.SMARTCARD, rsaPublicKey, exp);
 	}
-	
-	// TODO: topup (protocol 6.10), lots of steps in that protocol
-	// TODO: refund (protocol 6.11), similar to payment
 	
 	/**
 	 * Simulation of "checking with the bank" if the payment was valid
