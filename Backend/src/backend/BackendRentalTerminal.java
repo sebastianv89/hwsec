@@ -15,11 +15,11 @@ import terminal.Card;
  * cert[173...301] = Signature (128bytes)
  */ 
 
-/*ALGO: 1. get cardCert from S
- * 		2. do mutual authentication between Rental Terminal - Smartcard 
- * 		3. get card data from database
- * 		4. do the change (register, top up or refund)
- * 		5. update database + update card certificate (if needed)
+/*ALGO:  
+ * 		1. get cardCert from smartcard and do mutual authentication between Rental Terminal - Smartcard 
+ * 		2. get card data from database
+ * 		3. do the change (register, top up or refund)
+ * 		4. update database + update card certificate (if needed)
  */
 
 public class BackendRentalTerminal {
@@ -42,12 +42,13 @@ public class BackendRentalTerminal {
 		return cert;
 	}
 	
-	private boolean MutualAuthenticationRT_S(){
-		boolean states = true;
+	private byte[] MutualAuthenticationRT_S(){
+		byte[] cert = ReadCertFromSmartCard();
 		//TODO:
 		//Check Mutual Authentication between Rental Terminal and SmartCards
-		//if succeed then states = true
-		return states;
+		//Need to do a revocation check as well		
+	
+		return cert;
 		
 	}
 	
@@ -58,9 +59,8 @@ public class BackendRentalTerminal {
 	 * 3. Add customer and card data to database. NOTE: pubkey database is string
 	 */
 	public void RegisterNewCustomer(String name){		
-		//1. read from the card 
-		byte[] cert = ReadCertFromSmartCard();
-		//TODO Do Mutual Authentication
+		//1. read from the card and do mutual authentication
+		byte[] cert = MutualAuthenticationRT_S();
 		
 		//2a. renew the certificate
 		byte[] newCert = null;
@@ -87,8 +87,8 @@ public class BackendRentalTerminal {
 	 * @param cardKm: the kilometers amount that stored in the card
 	 */
 	public Card TopUpCard(short cardKm){
-		byte[] cert = ReadCertFromSmartCard();
-		//TODO Do Mutual Authentication
+		//1. read from the card and do mutual authentication
+		byte[] cert = MutualAuthenticationRT_S();
 		
 		byte[] newCert = null;
 		Card card = getCardDB(cert);
@@ -97,7 +97,7 @@ public class BackendRentalTerminal {
 			/* renew the certificate */
 			newCert = be.renewCertificate(cert);
 			
-			/* Update the Card data (in a struct) */
+			/* Update the Card class data  */
 			card.setKilometers(card.getKilometers() + cardKm);
 			//extract expiration date from the new certificate and convert it to Long 
 			long expNew  = byteUtil.bytesToLong(getExpFromCert(newCert));
@@ -114,6 +114,23 @@ public class BackendRentalTerminal {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return card;
+	}
+	
+	
+	//Refund the kilometers
+	public Card refundKilometers(){
+		//1. read from the card and do mutual authentication
+		byte[] cert = MutualAuthenticationRT_S();
+		
+		//2. get card data from database
+		Card card = getCardDB(cert);
+		
+		
+		/* update to database  */
+		db.updateKilometersExpiration(0, card.getExpDate(), card.getID());
+				
+		//TODO update to Card
 		return card;
 	}
 	
@@ -142,13 +159,7 @@ public class BackendRentalTerminal {
 		return card;
 	}
 	
-	//Refund the kilometers
-	public void refundKilometers(byte[] cert, Card card){
-		/* update to database  */
-		db.updateKilometersExpiration(0, card.getExpDate(), card.getID());
-			
-		//TODO update to Card
-	}
+	
 	
 	
 	//get the expiration date from the certificate
@@ -173,7 +184,5 @@ public class BackendRentalTerminal {
 	    System.out.println(dateText);
 	    return dateText;
 	}
-	
-	
 
 }
