@@ -1,5 +1,8 @@
 package backend;
 
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -38,7 +41,7 @@ public class Backend {
 				exp);
 
 		// get the CA verification key
-		byte[] certVerifKey = ca.getVerificationKey();
+		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
 
 		// add smartcard to database
 		db.addSmartcard(customerId, exp, keypair.getPublic());
@@ -83,7 +86,7 @@ public class Backend {
 		db.addVehicleTerminal(keypair.getPublic(), secretKey);
 
 		// get the CA public verification key
-		byte[] certVerifKey = ca.getVerificationKey();
+		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
 
 		// register vehicle terminal in the database
 		return new InitData(cert, keypair.getPrivate(), secretKey, certVerifKey);
@@ -98,9 +101,13 @@ public class Backend {
 	 *            Used to identify the smartcard
 	 */
 	public void revokeSmartcard(byte[] cert) {
-		// TODO: extract id (public key?) from certificate
-		byte[] publicKey = new byte[1];
-		db.revokeSmartcard(publicKey);
+		byte[] publicKey;
+		System.arraycopy(cert, 1, publicKey, 0, 162);
+		
+		Serialization serialize = new Serialization();
+		String strPublicKey = serialize.SerializeByteKey(publicKey);
+		
+		db.revokeSmartcard(strPublicKey);
 	}
 
 	/**
@@ -111,21 +118,20 @@ public class Backend {
 	 * 
 	 * @param cert
 	 *            The old certificate
-	 * @return the new certificate
+	 * @return the new certificate if the card is not revoked
 	 * @throws RevokedException
 	 *             If the smartcard was revoked
 	 */
-	//TODO: NOT DONE YET!!!!
 	public byte[] renewCertificate(byte[] cert) throws RevokedException {
-		// TODO: extract id (public key?) from certificate
-		// check the revocation status in the database
 		
 		// first get the pubkey fromt the cert
 		byte[] publicKey;
-		System.arraycopy(cert, 1, pubKey, 0, 162);
+		System.arraycopy(cert, 1, publicKey, 0, 162);
 		
+		Serialization serialize = new Serialization();
+		String strPublicKey = serialize.SerializeByteKey(publicKey);
 		
-		if (db.isRevoked(publicKey)) {
+		if (db.isRevoked(strPublicKey)) {
 			throw new RevokedException();
 		}
 		
