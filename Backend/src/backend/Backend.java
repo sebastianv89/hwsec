@@ -29,12 +29,13 @@ public class Backend {
 
 	/**
 	 * Register a new Smartcard. Should be called by the personalisation terminal
+	 * @param i 
 	 * 
 	 * @param customerId
 	 *            customer id, link card to this customer
 	 * @return certificate and secret key of the card
 	 */
-	public InitData registerNewCard() {
+	public InitData registerNewCard(int i) {
 		// generate a new (random) keypair
 		KeyPair keypair = new KeyPair();
 		long exp = getExpirationDate();
