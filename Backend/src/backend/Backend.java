@@ -1,8 +1,11 @@
 package backend;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -21,7 +24,8 @@ public class Backend {
 
 	private Database db;
 	private CertAuth ca;
-
+	ConstantValues CV = new ConstantValues();
+	
 	public Backend() {
 		db = new Database();
 		ca = new CertAuth();
@@ -29,6 +33,7 @@ public class Backend {
 
 	/**
 	 * Register a new Smartcard. Should be called by the personalisation terminal
+	 * @param i 
 	 * 
 	 * @param customerId
 	 *            customer id, link card to this customer
@@ -46,9 +51,8 @@ public class Backend {
 		// get the CA verification key
 		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
 
-//		// add smartcard to database
-//		db.addSmartcard(customerId, exp, keypair.getPublic());
-
+		// Dont need to store it since we have not given out the card yet!
+		
 		return new InitData(cert, keypair.getPrivate(), certVerifKey);
 	}
 
@@ -67,7 +71,7 @@ public class Backend {
 		byte[] cert = ca
 				.makeCert(CertAuth.TYPE.RENTALTERM, keypair.getPublic());
 
-		return new InitData(cert, keypair.getPrivate());
+		return new InitData(cert, keypair.getPrivate()); //Dont need pubkey because it is in the cert
 	}
 
 	/**
@@ -78,24 +82,16 @@ public class Backend {
 	public InitData registerVehicleTerminal() {
 		// generate a new (random) keypair
 		KeyPair keypair = new KeyPair();
-		// generate a secret key (used for logging)
-		RSAPrivateKey secretKey = keypair.getPrivate();
 
 		// get a certificate from the CA
 		byte[] cert = ca
 				.makeCert(CertAuth.TYPE.RENTALTERM, keypair.getPublic());
-
-		// add vehicle terminal to the database
-		Serialization serialize = new Serialization();
-		String strPublicKey = serialize.SerializePublicKey(keypair.getPublic());
-		String strPrivateKey = serialize.SerializePrivateKey(secretKey);
-		db.addVehicleTerminal(strPublicKey, strPrivateKey);
-
+		
 		// get the CA public verification key
 		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
 
 		// register vehicle terminal in the database
-		return new InitData(cert, keypair.getPrivate(), secretKey, certVerifKey);
+		return new InitData(cert, keypair.getPrivate(), certVerifKey);
 	}
 
 	/**
@@ -107,8 +103,8 @@ public class Backend {
 	 *            Used to identify the smartcard
 	 */
 	public void revokeSmartcard(byte[] cert) {
-		byte[] publicKey = null;
-		System.arraycopy(cert, 1, publicKey, 0, 162); // bytes 1...162 are pubKey
+		byte[] publicKey = new byte[CV.RSAPUBLICKEYLENGTH];
+		System.arraycopy(cert, 1, publicKey, 0, CV.RSAPUBLICKEYLENGTH); // bytes 1...162 are pubKey
 		
 		Serialization serialize = new Serialization();
 		String strPublicKey = serialize.SerializeByteKey(publicKey);
@@ -131,8 +127,8 @@ public class Backend {
 	public byte[] renewCertificate(byte[] cert) throws RevokedException {
 		RSAPublicKey rsaPublicKey = null;
 		// first get the pubkey fromt the cert
-		byte[] publicKey = null;
-		System.arraycopy(cert, 1, publicKey, 0, 162);
+		byte[] publicKey = new byte[CV.RSAPUBLICKEYLENGTH];
+		System.arraycopy(cert, 1, publicKey, 0, CV.RSAPUBLICKEYLENGTH);
 		
 		Serialization serialize = new Serialization();
 		String strPublicKey = serialize.SerializeByteKey(publicKey);
@@ -163,9 +159,6 @@ public class Backend {
 		return ca.makeCert(CertAuth.TYPE.SMARTCARD, rsaPublicKey, exp);
 	}
 	
-	// TODO: topup (protocol 6.10), lots of steps in that protocol
-	// TODO: refund (protocol 6.11), similar to payment
-	
 	/**
 	 * Simulation of "checking with the bank" if the payment was valid
 	 */
@@ -189,6 +182,22 @@ public class Backend {
 		c.add(Calendar.DATE, 21);
 		return c.getTimeInMillis(); // TODO: can't we make this a short, maybe a
 									// counter in days
+	}
+	
+   private static void writeKey(Key key, String filename) {
+	      FileOutputStream file;
+		try {
+			file = new FileOutputStream(filename);
+		    file.write(key.getEncoded());
+		    file.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 	
 }

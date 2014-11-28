@@ -45,27 +45,20 @@ public class RentalTerminal {
 		    Scanner scKm = new Scanner(System.in);
 		    short kilometers = (short) scKm.nextInt();
 			
-		    rt.TopUpCard(kilometers);
+		    Card card = rt.TopUpCard(kilometers);
+		    System.out.println("Name: "+ card.getCustomerName());
+		    System.out.println("Kilometers: " + card.getStringKilometers());
+		    System.out.println("Expiration date" + card.getExpDate());
 			
 		}else if(menu.equals("3")){
 			//Refund is topup with 0
-			//QUESTION: do we need to revoke the key at refund?
 			System.out.println("Menu Refund");
 			
-			//Do Mutual Authentication --> check the card data
-		    if(rt.MutualAuthenticationRT_S()){
-		    	//read certificate from the card --> after Mutual Authentication of RT and S  
-				byte[] cardCert = new byte[163];
-				
-				//Get the card data from the database
-				Card cardDB = rt.getCardDB(cardCert);
-				if(cardDB!=null){
-				    System.out.println(cardDB.getKilometers());
-				    rt.refundKilometers(cardCert, cardDB);
-				}
-		    }else{
-		    	System.out.println("Authentication failed. Card is not recognized.");
-		    }
+			Card card = rt.refundKilometers();
+		    System.out.println("Name: "+ card.getCustomerName());
+		    System.out.println("Kilometers: " + card.getStringKilometers());
+		    System.out.println("Expiration date" + card.getExpDate());
+			
 		}
 
 	}
