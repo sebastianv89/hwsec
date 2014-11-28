@@ -22,16 +22,6 @@ import terminal.Card;
  * 		4. update database + update card certificate (if needed)
  */
 
-/*
- * 		KeyPair kp = new KeyPair();
-		System.out.println(kp.getPublic().getPublicExponent());
-		System.out.println(getDigitCount(kp.getPublic().getPublicExponent())); //5bytes
-		System.out.println(kp.getPublic().getModulus()); //309bytes
-		System.out.println(getDigitCount(kp.getPublic().getModulus())); //309bytes
-		System.out.println(kp.getPrivate().getPrivateExponent()); //308bytes
-		System.out.println(getDigitCount(kp.getPrivate().getPrivateExponent()));
-		System.out.println(kp.getPrivate().getModulus());
- */
 
 public class BackendRentalTerminal {
 	Database db = new Database();
@@ -112,20 +102,18 @@ public class BackendRentalTerminal {
 			/* renew the certificate */
 			newCert = be.renewCertificate(cert);
 			
-			/* Update the Card class data  */
-			card.setKilometers(card.getKilometers() + cardKm);
 			//extract expiration date from the new certificate and convert it to Long 
 			long expNew  = byteUtil.bytesToLong(getExpFromCert(newCert));
 			//convert the long date to string
 			String expString = convertLongDateToString(expNew);
-			card.setExpiration(expString);
+			card.setExpiration(expNew);
+			card.setStringExpiration(expString);
 			
 			/* update to database  */
-			db.updateKilometersExpiration(card.getKilometers(), expNew, card.getID());
+			db.updateKilometersExpiration(card.getKilometers()+ cardKm, expNew, card.getID());
 				
 			//TODO update to the smartcard 
-			short cardNewKm = (short) (km + cardKm);
-			
+			card.setKilometers(km + cardKm);
 			
 		} catch (RevokedException e) {
 			// TODO Auto-generated catch block
@@ -143,8 +131,10 @@ public class BackendRentalTerminal {
 		//2. get card data from database
 		Card card = getCardDB(cert);
 		
+		//3. do the refund
+		card.setKilometers(0);
 		
-		/* update to database  */
+		/*4. update to database  */
 		db.updateKilometersExpiration(0, card.getExpDate(), card.getID());
 				
 		//TODO update to Card
@@ -164,7 +154,7 @@ public class BackendRentalTerminal {
 		try {
 			if(rs.next()){
 				card = new Card(rs.getInt("id"), rs.getInt("custID"), rs.getString("custName"), 
-						rs.getInt("km"), convertLongDateToString(rs.getLong("exp")) , rs.getInt("revoke"), rs.getString("cardPK"));
+						rs.getInt("km"), rs.getLong("exp") , rs.getInt("revoke"), rs.getString("cardPK"));
 			}else{
 				System.out.println("That card has not been issued");
 				card = null;
@@ -193,6 +183,7 @@ public class BackendRentalTerminal {
 		return pubKey;		
 	}
 	
+
 	//convert long date to string date
 	private String convertLongDateToString(long expDate){
 	    Date date=new Date(expDate);
