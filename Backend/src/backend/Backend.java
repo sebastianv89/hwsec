@@ -25,13 +25,13 @@ public class Backend {
 	}
 
 	/**
-	 * Register a new Smartcard
+	 * Register a new Smartcard. Should be called by the personalisation terminal
 	 * 
 	 * @param customerId
 	 *            customer id, link card to this customer
 	 * @return certificate and secret key of the card
 	 */
-	public InitData registerNewCard(int customerId) {
+	public InitData registerNewCard() {
 		// generate a new (random) keypair
 		KeyPair keypair = new KeyPair();
 		long exp = getExpirationDate();
@@ -43,8 +43,8 @@ public class Backend {
 		// get the CA verification key
 		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
 
-		// add smartcard to database
-		db.addSmartcard(customerId, exp, keypair.getPublic());
+//		// add smartcard to database
+//		db.addSmartcard(customerId, exp, keypair.getPublic());
 
 		return new InitData(cert, keypair.getPrivate(), certVerifKey);
 	}
