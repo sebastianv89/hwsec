@@ -6,6 +6,7 @@ import java.util.Random;
 import javax.smartcardio.CardException;
 import javax.smartcardio.CardTerminal;
 import javax.smartcardio.CardTerminals;
+import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.TerminalFactory;
 
 import java.security.SecureRandom;
@@ -15,6 +16,8 @@ import backend.Backend;
 import backend.InitData;
 
 public class VehicleTerminal {
+	
+	private boolean ready;
 	
 	public static void main(String[] args){
 		Backend bk = new Backend();
@@ -31,22 +34,23 @@ public class VehicleTerminal {
 	// RT : checks that expiration <= current time
 	// RT -> S:{K_VT,S}K_tmp
 	
-		
-		public boolean isCardPresent() {
-			//check if the card is present in the vehicle terminal
-			ReadWrite rw = new ReadWrite();
-			List<ReadWrite> rw;
-			try {
-				rw = ct.list(ReadWrite.State.CARD_PRESENT);
-				for (VehicleTerminal v : rw) {
-					if (v.isCardPresent()){
-						return this.ready;
-						//if present it returns true and performs mutual authentication
-					}
-				}
-			} catch (CardException e) {
-				// Do nothing
+	public boolean isCardPresent() {
+	
+	
+	TerminalFactory factory = TerminalFactory.getDefault();
+	CardTerminals ct = factory.terminals();
+	List<CardTerminal> cs;
+	
+	try {
+		cs = ct.list(CardTerminals.State.CARD_PRESENT);
+		for (CardTerminal c : cs) {
+			if (c.isCardPresent()){
+				return this.ready;
 			}
+		}
+	} catch (CardException e) {
+		// Do nothing
+	}
 			
 			return false;
 		}
@@ -57,7 +61,7 @@ public class VehicleTerminal {
 		
 			return status;
 			
-			//generating random number (nounce)
+			//generating random number (nonce)
 			SecureRandom random = new SecureRandom();
 			byte bytes[] = new bytes[20];
 			random.nextBytes(bytes);
@@ -79,7 +83,13 @@ public VehicleTerminal getVehicleTerminal() throws Exception{
 
 // communication with the smartcard
 //have to create two temp buffer on smartcard for the process
-private void readBuffer(APDU apdu, byte[] dest, short offset, short length) {
+/**
+ * @param apdu
+ * @param dest
+ * @param offset
+ * @param length
+ */
+/*private void readBuffer(APDU apdu, byte[] dest, short offset, short length) {
 	byte[] buf = apdu.getBuffer();
 	temp_short_1 = apdu.setIncomingAndReceive();
 	temp_short_2 = 0;
@@ -88,6 +98,16 @@ private void readBuffer(APDU apdu, byte[] dest, short offset, short length) {
 		temp_short_2 += temp_short_1;
 		offset += temp_short_1;
 		temp_short_1 = (short) apdu.receiveBytes(OFFSET_CDATA);
-		Util.arrayCopy(buf, OFFSET_CDATA, dest, offset, temp_short_1);
+		Util.arrayCopy(Buff, OFFSET_CDATA, dest, offset, temp_short_1);
+	}*/
+
+
+SecureRandom random = new SecureRandom();
+		byte[] random_nonce = new byte[8];
+		random.nextBytes(random_nonce);
+		capdu = new CommandAPDU(CLA_ISSUE, SET_RANDOM_DATA_NONCE, (byte) 0, (byte) 0, random_nonce, 8);
+		terminal.sendCommandAPDU(capdu); 
+
 	}
 }
+
