@@ -5,7 +5,7 @@ public class Card {
 	int customerID; 
 	String customerName;
 	int kilometers;
-	long expiration;
+	String expiration;
 	int revocation;
 	String cardPublicKey;
 	
@@ -13,7 +13,7 @@ public class Card {
 		
 	}
 	
-	public Card(int ID, int custID, String custName, int km, long exp, 
+	public Card(int ID, int custID, String custName, int km, String exp, 
 			int revoke, String cardPK){
 		this.id = ID;
 		this.customerID = custID;
@@ -28,7 +28,7 @@ public class Card {
 		this.kilometers = kmNew;
 	}
 	
-	public void setExpiration(long expNew){
+	public void setExpiration(String expNew){
 		this.expiration = expNew;
 	}
 	
@@ -48,7 +48,7 @@ public class Card {
 		return this.kilometers;
 	}
 	
-	public long getExpDate(){
+	public String getExpDate(){
 		return this.expiration;
 	}
 	
