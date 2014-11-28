@@ -1,42 +1,81 @@
 package smartcar;
 
+import javacard.framework.ISO7816;
 import javacard.framework.Util;
+import javacard.security.KeyBuilder;
+import javacard.security.RSAPrivateKey;
+import javacard.security.RSAPublicKey;
+import javacardx.crypto.Cipher;
 
 /**
  * Class for holding all persistent security data
  */
 public class SecureData {
 
-	// size (in bytes) of the values
-	public static final short SIZE_SIGNATURE_KEY = 634;
-	public static final short SIZE_CA_VERIFICATION_KEY = 162;
-	public static final short SIZE_CERTIFICATE = 293;
+	// sizes of data
+	public static final short SIZE_CERTIFICATE_DATA = 131;
+	public static final short SIZE_CERTIFICATE_SIG = 128;
+	public static final short SIZE_RSAKEY_EXP = 128;
+	public static final short SIZE_RSAKEY_MOD = 128;
 
-	private byte[] signatureKey;
-	private byte[] caVerificationKey;
+	// crypt objects
+	private RSAPrivateKey signatureKey;
+	RSAPublicKey caVerificationKey;
+	Cipher cipher;
+
+	// TODO: check if the public RSA exponent is always the same
+	private static final byte[] RSA_EXP = { 0x01, 0x00, 0x01 };
+	private static final short RSA_EXP_SIZE = 0x0003;
+
+	// certificate is stored raw, easiest for just sending data
 	private byte[] certificate;
 
-	/** Caller should verify that buffer length is equal to totalLength */
-	SecureData(byte[] buffer, short ofs) {
+	/** Constructor, allocates data, initializes crypto */
+	SecureData() {
 		// allocate data
-		signatureKey = new byte[SIZE_SIGNATURE_KEY];
-		caVerificationKey = new byte[SIZE_CA_VERIFICATION_KEY];
-		certificate = new byte[SIZE_CERTIFICATE];
+		certificate = new byte[SIZE_CERTIFICATE_DATA + SIZE_CERTIFICATE_SIG];
 
-		// TODO: use transaction here?
-		Util.arrayCopy(buffer, ofs, signatureKey, (short) 0, SIZE_SIGNATURE_KEY);
-		ofs += SIZE_SIGNATURE_KEY;
-		Util.arrayCopy(buffer, ofs, caVerificationKey, (short) 0, SIZE_CA_VERIFICATION_KEY);
-		ofs += SIZE_CA_VERIFICATION_KEY;
-		Util.arrayCopy(buffer, ofs, certificate, (short) 0, SIZE_CERTIFICATE);
+		// initialize crypto
+		signatureKey = (RSAPrivateKey) KeyBuilder.buildKey(
+				KeyBuilder.TYPE_RSA_PRIVATE, KeyBuilder.LENGTH_RSA_1024, false);
+		caVerificationKey = (RSAPublicKey) KeyBuilder.buildKey(
+				KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_1024, false);
+		caVerificationKey.setExponent(RSA_EXP, (short) 0, RSA_EXP_SIZE);
+		cipher = Cipher.getInstance(Cipher.ALG_RSA_PKCS1, false);
 	}
 
-	short getTotalLength() {
-		return SIZE_SIGNATURE_KEY + SIZE_CA_VERIFICATION_KEY + SIZE_CERTIFICATE;
+	/** Set the (private) key exponent (d) for the signature key */
+	void setSignKeyExp(byte[] buffer, short offset) {
+		signatureKey.setExponent(buffer, offset, SIZE_RSAKEY_EXP);
 	}
-	
-	/** Caller should ensure that buffer length is equal to SIZE_CERTIFICATE */
-	void setCertificate(byte[] buffer, short ofs) {
-		Util.arrayCopy(buffer, ofs, certificate, (short) 0, SIZE_CERTIFICATE);
+
+	/** Set the (public) key modulus (N) for the signature key */
+	void setSignKeyMod(byte[] buffer, short offset) {
+		signatureKey.setModulus(buffer, offset, SIZE_RSAKEY_MOD);
 	}
+
+	/** Set the (public) key modulus (N) for the CA verification key */
+	void setCAVerifKeyMod(byte[] buffer, short offset) {
+		caVerificationKey.setModulus(buffer, offset, SIZE_RSAKEY_MOD);
+	}
+
+	/** Set the data part of the certificate */
+	void setCertData(byte[] buffer, short ofs) {
+		Util.arrayCopy(buffer, ofs, certificate, (short) 0,
+				SIZE_CERTIFICATE_DATA);
+	}
+
+	/** Set the CA signature part of the certificate */
+	void setCertSig(byte[] buffer, short ofs) {
+		Util.arrayCopy(buffer, ofs, certificate, SIZE_CERTIFICATE_DATA,
+				SIZE_CERTIFICATE_SIG);
+	}
+
+	/** Get the certificate in the buffer data */
+	short getCert(byte[] buf, short ofs) {
+		short len = SIZE_CERTIFICATE_DATA + SIZE_CERTIFICATE_SIG;
+		Util.arrayCopy(certificate, (short) 0, buf, ofs, len);
+		return len;
+	}
+
 }
