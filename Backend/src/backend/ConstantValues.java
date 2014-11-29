@@ -11,6 +11,7 @@ public class ConstantValues {
 	public int PK_EXP_LENGTH = 170; //162+8
 	public int SIG_LENGTH = 128;
 	
+	public int EXPIRATIONSTARTPOS = 129;
 
 
 }
