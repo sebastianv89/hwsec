@@ -10,7 +10,7 @@ public class Card {
 	int revocation;
 	String cardPublicKey;
 	
-	
+	byte[] cardModulus;
 	
 	
 	public Card(){
@@ -38,6 +38,10 @@ public class Card {
 	public void setStringExpiration(String strExpNew){
 		this.expString = strExpNew;
 	}
+	public void setCardModulus(byte[] cardByteModulus){
+		this.cardModulus = cardByteModulus;
+	}
+	
 	
 	public int getID(){
 		return this.id;
@@ -68,6 +72,10 @@ public class Card {
 	}
 	public String getCardPublicKey(){
 		return this.cardPublicKey;
+	}
+	
+	public byte[] getCardModulus(){
+		return this.cardModulus;
 	}
 	
 
