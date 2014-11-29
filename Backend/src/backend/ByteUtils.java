@@ -1,6 +1,8 @@
 package backend;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Random;
 /**
  * 
  * @author Fitria
@@ -11,17 +13,31 @@ import java.nio.ByteBuffer;
  */
 
 public class ByteUtils {
-	static public byte[] longToBytes(long x) {
+	public byte[] longToBytes(long x) {
 	    ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE);
 	    buffer.putLong(x);
 	    return buffer.array();
 	}
 
-	static public long bytesToLong(byte[] bytes) {
+	public long bytesToLong(byte[] bytes) {
 	    ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE);
 	    buffer.put(bytes);
 	    buffer.flip();//need flip 
 	    return buffer.getLong();
 	}
+	
+	/**
+	 * Generate a random Nonces for Mutual Auth
+	 * @param length: the random bytes length
+	 * @return random bytes array
+	 */
+	public byte[] GenerateRandomBytes(int length){
+		byte[] random = new byte[length];
+		
+		new Random().nextBytes(random);
+		//System.out.println(Arrays.toString(random));
+		return random;
+	}
+	
 	
 }

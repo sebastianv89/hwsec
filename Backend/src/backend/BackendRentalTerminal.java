@@ -28,7 +28,6 @@ public class BackendRentalTerminal {
 	Backend be = new Backend();
 	Serialization serial = new Serialization();
 	ByteUtils byteUtil = new ByteUtils();
-	ConstantValues CV = new ConstantValues();
 	
 	public BackendRentalTerminal(){
 		
@@ -70,8 +69,8 @@ public class BackendRentalTerminal {
 			e.printStackTrace();
 		}
 		//2b. extract the expiration date and pubkey from card certificate
-		byte[] exp = getExpFromCert(newCert);
-		byte[] pubKey = getPublicKeyFromCert(newCert);
+		byte[] exp = serial.getExpFromCert(newCert);
+		byte[] pubKey = serial.getPublicKeyFromCert(newCert);
 		String strPubKey = serial.SerializeByteKey(pubKey);
 		long expLong = byteUtil.bytesToLong(exp);
 		
@@ -101,7 +100,7 @@ public class BackendRentalTerminal {
 			newCert = be.renewCertificate(cert);
 			
 			//extract expiration date from the new certificate and convert it to Long 
-			long expNew  = byteUtil.bytesToLong(getExpFromCert(newCert));
+			long expNew  = byteUtil.bytesToLong(serial.getExpFromCert(newCert));
 			//convert the long date to string
 			String expString = convertLongDateToString(expNew);
 			card.setExpiration(expNew);
@@ -165,22 +164,6 @@ public class BackendRentalTerminal {
 	}
 	
 	
-	
-	
-	//get the expiration date from the certificate
-	private byte[] getExpFromCert(byte[] cert){
-		byte[] exp = new byte[CV.EXP_LENGTH];
-		System.arraycopy(cert, 164, exp, 0, CV.EXP_LENGTH);
-		return exp;
-	}
-	
-	//get public key from certificate
-	private byte[] getPublicKeyFromCert(byte[] cert){
-		byte[] pubKey = new byte[CV.RSAPUBLICKEYLENGTH];
-		System.arraycopy(cert, 1, pubKey, 0, CV.RSAPUBLICKEYLENGTH);
-		return pubKey;		
-	}
-	
 
 	//convert long date to string date
 	private String convertLongDateToString(long expDate){
@@ -190,5 +173,7 @@ public class BackendRentalTerminal {
 	    System.out.println(dateText);
 	    return dateText;
 	}
+	
+	
 
 }

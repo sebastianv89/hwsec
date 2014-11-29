@@ -58,7 +58,6 @@ public class RentalTerminal {
 		    System.out.println("Name: "+ card.getCustomerName());
 		    System.out.println("Kilometers: " + card.getStringKilometers());
 		    System.out.println("Expiration date" + card.getExpDate());
-			
 		}
 
 	}
