@@ -24,6 +24,7 @@ import javax.smartcardio.TerminalFactory;
 
 import backend.ByteUtils;
 import backend.ConstantValues;
+import backend.MutualAuthentication;
 
 public class VehicleTerminal {
 
@@ -34,6 +35,7 @@ public class VehicleTerminal {
 	public byte[] vtCertificate = new byte[257];
 	byte[] sessionKey = null;
 	terminal.Card card = new terminal.Card();
+	MutualAuthentication mu = new MutualAuthentication();
 	
 	// Set up the card:
 	// Selection APDU parameters
@@ -115,9 +117,7 @@ public class VehicleTerminal {
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
-				if (rapdu.getData() != null) { //if we got a reply
-					// return below
-				} else {
+				if (rapdu.getData() == null) { //if we got a reply
 					throw new CardException(rapdu.toString());
 				}
 			}
@@ -139,25 +139,26 @@ public class VehicleTerminal {
 		message = "ignition";
 		byte[] data = message.getBytes();
 		byte[] ignitionReply = sendToCard(data, INS_VT_START, sessionKey);
-		// Split this block into: reply data, pubKey and signature
-		byte[] rData = new byte[13]; //we expect "ignition ok".getBytes() which has length 11, plus a short "km" (2 bytes)
-		System.arraycopy(ignitionReply, 0, rData, 0, 13);
+		// Split this block into: reply data and signature
+		byte[] rData = new byte[3]; //we expect iR[0] = 1 for ignition ok, and iR[0] = 0 for not enough km, plus a short "km" (2 bytes)
+		System.arraycopy(ignitionReply, 0, rData, 0, 3);
 		byte[] signature = new byte[128];
-		System.arraycopy(ignitionReply, 14, signature, 0, 128);
-		sigVerif(rData, card.getCardPublicKey(), signature);
+		System.arraycopy(ignitionReply, 3, signature, 0, 128);
+		boolean sigCheck = mu.sigVerif(rData, card.getCardModulus(), signature);
 		
-		// Now we expect the card to send back:
-		// {⟨"ignition ok", km⟩}SKS
-		
-//		sigVerif(replyData, replySig, cardPubKey); //TODO: This will be created by Fitria later on
-		
-		// If the signature of the message is ok:
-		
-		// Check what the message was ("ignition ok", km) or ("not enough km")
-		// Only in case of ignition ok, call startVehicle()
-		byte[] km = null;
-		card.setKilometers(km[0]); //TODO: Read this from the replyData
-		addLogEntry(km);
+		if (sigCheck == true) { //if the signature matches
+			// Check what the message was ("ignition ok", km) or ("not enough km")
+			// Only in case of ignition ok, call startVehicle()
+			byte[] km = new byte[2];
+			System.arraycopy(rData, 1, km, 0, 2);
+			ByteUtils bu = new ByteUtils();
+			long km2 = bu.bytesToLong(km);
+			card.setKilometers(km2); //TODO: Read this from the replyData
+			addLogEntry(km2);
+			
+		} else {
+			//TODO: Signature didnt match, what do we do?
+		}
 		
 		// Call driving???
 	}
