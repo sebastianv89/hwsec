@@ -27,6 +27,20 @@ public class ByteUtils {
 	    return buffer.getLong();
 	}
 	
+	public short bytesToShort(byte[] bytes) {
+		ByteBuffer bb = ByteBuffer.allocate(Short.SIZE);
+		bb.put(bytes);
+		bb.flip();
+		return bb.getShort();
+	}
+	
+	public byte[] shortToBytes(short x) {
+	    ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE);
+	    buffer.putShort(x);
+	    return buffer.array();
+	}
+	
+	
 	/** BigInteger to bytes (without leading zero) */
 	byte[] getBytes(BigInteger big) {
 		byte[] data = big.toByteArray();

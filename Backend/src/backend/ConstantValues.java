@@ -18,6 +18,7 @@ public class ConstantValues {
 	
 	public int CARDCERT_LENGTH = 265;
 	public int TERMINALCERT_LENGTH = 257;
+	public int CARDDATA_LENGTH = 260;
 	
 
 
