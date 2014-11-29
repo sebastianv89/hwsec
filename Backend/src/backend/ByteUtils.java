@@ -1,5 +1,6 @@
 package backend;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Random;
@@ -24,6 +25,26 @@ public class ByteUtils {
 	    buffer.put(bytes);
 	    buffer.flip();//need flip 
 	    return buffer.getLong();
+	}
+	
+	/** BigInteger to bytes (without leading zero) */
+	byte[] getBytes(BigInteger big) {
+		byte[] data = big.toByteArray();
+		if (data[0] == 0) {
+			byte[] tmp = data;
+			data = new byte[tmp.length - 1];
+			System.arraycopy(tmp, 1, data, 0, tmp.length - 1);
+		}
+		return data;
+	}
+
+	/** Get bytes in hexadecimal String */
+	String toHexString(byte[] in) {
+		StringBuilder out = new StringBuilder(2 * in.length);
+		for (int i = 0; i < in.length; i++) {
+			out.append(String.format("%02x ", (in[i] & 0xFF)));
+		}
+		return out.toString().toUpperCase();
 	}
 	
 	/**

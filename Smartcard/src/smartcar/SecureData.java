@@ -1,5 +1,7 @@
 package smartcar;
 
+import javacard.security.Signature;
+import javacard.framework.JCSystem;
 import javacard.framework.Util;
 import javacard.security.KeyBuilder;
 import javacard.security.RSAPrivateKey;
@@ -12,15 +14,19 @@ import javacardx.crypto.Cipher;
 public class SecureData {
 
 	// sizes of data
-	public static final short SIZE_CERTIFICATE_DATA = 137;
+	public static final short SIZE_CARD_CERTIFICATE_DATA = 137;
+	public static final short SIZE_TERM_CERTIFICATE_DATA = 129;
 	public static final short SIZE_CERTIFICATE_SIG = 128;
 	public static final short SIZE_RSAKEY_EXP = 128;
 	public static final short SIZE_RSAKEY_MOD = 128;
 
 	// crypt objects
-	private RSAPrivateKey signatureKey;
-	RSAPublicKey caVerificationKey;
-	Cipher cipher;
+	private RSAPrivateKey signatureKey; // TODO: replace completely with signer
+	RSAPublicKey caVerificationKey; // TODO: replace completely with caVerifier
+	RSAPublicKey[] termEncryptKey; // RAM
+	Signature signer;
+	Signature caVerifier;
+	Cipher termEncrypter;
 
 	// TODO: check if the public RSA exponent is always the same
 	private static final byte[] RSA_EXP = { 0x01, 0x00, 0x01 };
@@ -32,15 +38,48 @@ public class SecureData {
 	/** Constructor, allocates data, initializes crypto */
 	SecureData() {
 		// allocate data
-		certificate = new byte[SIZE_CERTIFICATE_DATA + SIZE_CERTIFICATE_SIG];
+		certificate = new byte[SIZE_CARD_CERTIFICATE_DATA
+				+ SIZE_CERTIFICATE_SIG];
+		termEncryptKey = (RSAPublicKey[]) JCSystem.makeTransientObjectArray(
+				(short) 1, JCSystem.CLEAR_ON_DESELECT);
 
 		// initialize crypto
 		signatureKey = (RSAPrivateKey) KeyBuilder.buildKey(
 				KeyBuilder.TYPE_RSA_PRIVATE, KeyBuilder.LENGTH_RSA_1024, false);
 		caVerificationKey = (RSAPublicKey) KeyBuilder.buildKey(
 				KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_1024, false);
+		// set the constant public exponent for the CAKey
 		caVerificationKey.setExponent(RSA_EXP, (short) 0, RSA_EXP_SIZE);
-		cipher = Cipher.getInstance(Cipher.ALG_RSA_PKCS1, false);
+
+		// initialize "the workers"
+		caVerifier = Signature.getInstance(Signature.ALG_RSA_MD5_PKCS1, false);
+		signer = Signature.getInstance(Signature.ALG_RSA_MD5_PKCS1, false);
+		termEncrypter = Cipher.getInstance(Cipher.ALG_RSA_ISO14888, false);
+		Cipher.ALG_RSA
+	}
+
+	/** Validate a terminal certificate */
+	boolean validateCert(byte[] data, short dataOfs, byte[] sig, short sigOfs,
+			byte type) {
+		// validate certificate type
+		if (data[dataOfs++] != type) {
+			return false;
+		}
+		return caVerifier.verify(data, dataOfs, SIZE_TERM_CERTIFICATE_DATA,
+				sig, sigOfs, SIZE_CERTIFICATE_SIG);
+	}
+
+	/** Initialize the workers after personalization */
+	void init() {
+		signer.init(signatureKey, Signature.MODE_SIGN);
+		caVerifier.init(caVerificationKey, Signature.MODE_VERIFY);
+	}
+
+	/** Set the (public) key modulus (N) for the encryption key */
+	void setTermEncryptKeyMod(byte[] buffer, short offset) {
+		termEncryptKey[0].setModulus(buffer, offset, SIZE_RSAKEY_MOD);
+		termEncryptKey[0].setExponent(RSA_EXP, (short) 0, RSA_EXP_SIZE);
+		termEncrypter.init(termEncryptKey[0], Cipher.MODE_ENCRYPT);
 	}
 
 	/** Set the (private) key exponent (d) for the signature key */

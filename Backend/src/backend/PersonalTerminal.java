@@ -1,6 +1,5 @@
 package backend;
 
-import java.math.BigInteger;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.List;
@@ -36,6 +35,7 @@ public class PersonalTerminal {
 
 	// Constants
 	ConstantValues cv;
+	ByteUtils bu;
 
 	// Connection with the card
 	private CardChannel applet;
@@ -79,10 +79,9 @@ public class PersonalTerminal {
 
 		try {
 			// send private exponent of the smartcard signature key
-			byte[] exponent = getBytes(signKey.getPrivateExponent());
+			byte[] exponent = bu.getBytes(signKey.getPrivateExponent());
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_SK, 0x00,
 					0x00, exponent);
-			System.out.println(capdu);
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
@@ -94,10 +93,10 @@ public class PersonalTerminal {
 			}
 
 			// send public modulus of the ca verification key
-			byte[] modulus = getBytes(caVerifKey.getModulus());
+			byte[] modulus = bu.getBytes(caVerifKey.getModulus());
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_VKCA, 0x00,
 					0x00, modulus);
-			System.out.println(capdu + "Data: " + capdu.getData());
+			System.out.println(capdu + "Data: " + bu.toHexString(capdu.getData()));
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
@@ -110,7 +109,7 @@ public class PersonalTerminal {
 			System.arraycopy(cert, 0, certData, 0, certDataLen);
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_CERT_DATA,
 					0x00, 0x00, certData);
-			System.out.println(capdu + "Data: " + capdu.getData());
+			System.out.println(capdu + "Data: " + bu.toHexString(capdu.getData()));
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
@@ -122,7 +121,7 @@ public class PersonalTerminal {
 			System.arraycopy(cert, certDataLen, certSig, 0, cv.SIG_LENGTH);
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_CERT_SIG,
 					0x00, 0x00, certSig);
-			System.out.println(capdu + "Data: " + capdu.getData());
+			System.out.println(capdu + "Data: " + bu.toHexString(capdu.getData()));
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
@@ -200,26 +199,6 @@ public class PersonalTerminal {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	/** BigInteger to bytes (without leading zero) */
-	byte[] getBytes(BigInteger big) {
-		byte[] data = big.toByteArray();
-		if (data[0] == 0) {
-			byte[] tmp = data;
-			data = new byte[tmp.length - 1];
-			System.arraycopy(tmp, 1, data, 0, tmp.length - 1);
-		}
-		return data;
-	}
-
-	/** Get bytes in hexadecimal String */
-	String toHexString(byte[] in) {
-		StringBuilder out = new StringBuilder(2 * in.length);
-		for (int i = 0; i < in.length; i++) {
-			out.append(String.format("%02x ", (in[i] & 0xFF)));
-		}
-		return out.toString().toUpperCase();
 	}
 
 	public static void main(String[] arg) {

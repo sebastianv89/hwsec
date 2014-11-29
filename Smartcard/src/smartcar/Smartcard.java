@@ -1,12 +1,9 @@
 package smartcar;
 
-import org.globalplatform.GPSystem;
-
 import javacard.framework.APDU;
 import javacard.framework.Applet;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
-import javacard.framework.Util;
 
 public class Smartcard extends Applet {
 
@@ -15,12 +12,12 @@ public class Smartcard extends Applet {
 	public static final byte INS_PT_PERSONALIZE_VKCA = 0x12;
 	public static final byte INS_PT_PERSONALIZE_CERT_DATA = 0x14;
 	public static final byte INS_PT_PERSONALIZE_CERT_SIG = 0x16;
-	public static final byte INS_RT_AUTH_1 = 0x20;
-	public static final byte INS_RT_AUTH_2 = 0x22;
-	public static final byte INS_RT_AUTH_4 = 0x24;
-	public static final byte INS_VT_AUTH_1 = 0x30;
-	public static final byte INS_VT_AUTH_2 = 0x32;
-	public static final byte INS_VT_AUTH_4 = 0x34;
+	public static final byte INS_AUTH_1 = 0x20;
+	public static final byte INS_AUTH_2 = 0x22;
+	public static final byte INS_AUTH_3 = 0x24;
+	public static final byte INS_AUTH_4 = 0x26;
+	public static final byte INS_AUTH_5 = 0x28;
+	public static final byte INS_AUTH_6 = 0x2A;
 	public static final byte INS_VT_START = 0x40;
 	public static final byte INS_VT_TICK_KM = 0x42;
 	public static final byte INS_VT_STOP = 0x44;
@@ -63,8 +60,10 @@ public class Smartcard extends Applet {
 		byte ins = buf[ISO7816.OFFSET_INS];
 		short lc = (short) (buf[ISO7816.OFFSET_LC] & 0x00FF);
 
-		// FIXME: check the length when/before receiving, this could lead to
+		// FIXME: check the lc when/before receiving, this could lead to
 		// bugs/vulnerabilities
+		
+		// FIXME: check the state when sending multiple data 
 
 		// Check the state of the smartcard
 		switch (state) {
@@ -85,6 +84,8 @@ public class Smartcard extends Applet {
 			case INS_PT_PERSONALIZE_CERT_SIG:
 				apdu.setIncomingAndReceive();
 				storage.setCertSig(buf, ISO7816.OFFSET_CDATA);
+				// FIXME: check that this is the last step in personalization
+				storage.init();
 				state = STATE_PERSONALIZED;
 			default:
 				ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
@@ -93,8 +94,10 @@ public class Smartcard extends Applet {
 		case STATE_PERSONALIZED:
 			switch (ins) {
 			case INS_RT_AUTH_1:
-				// TODO
-				ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
+				apdu.setIncomingAndReceive();
+				break;
+			case INS_RT_AUTH_2:
+				apdu.setIncomingAndReceive();
 				break;
 			default:
 				ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
