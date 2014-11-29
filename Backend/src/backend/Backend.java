@@ -88,7 +88,7 @@ public class Backend {
 				.makeCert(CertAuth.TYPE.RENTALTERM, keypair.getPublic());
 		
 		// get the CA public verification key
-		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
+		RSAPublicKey certVerifKey = ca.getVerificationKey();
 
 		// register vehicle terminal in the database
 		return new InitData(cert, keypair.getPrivate(), certVerifKey);
