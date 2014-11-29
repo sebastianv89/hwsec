@@ -36,7 +36,7 @@ public class CertAuth {
 		
 	};
 
-	private RSAPublicKey capubkey;
+	public RSAPublicKey capubkey;
 	private RSAPrivateKey caprivkey;
 	private String CAPrivateKeyFile = "CAPrivateKey"; // Path to the CA private key
 	private String CAPublicKeyFile = "CAPublicKey";
