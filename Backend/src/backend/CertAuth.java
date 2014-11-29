@@ -23,7 +23,7 @@ import java.security.spec.X509EncodedKeySpec;
  * */
 public class CertAuth {
 
-	
+	ConstantValues cv = new ConstantValues();
 	
 	public enum TYPE {
 		SMARTCARD ((byte)0), RENTALTERM ((byte)1), VEHICLETERM ((byte)2);
@@ -56,18 +56,18 @@ public class CertAuth {
 	 * Certificate for the terminals should not have an expdate
 	 * Certificate WITOUT expdate is a byte array that looks like:
 	 * cert[0] = type (0 = smartcard, 1 = rentalterm, 2 = vehicleterm)
-	 * cert[1..163] = rsapublickey (length 162bytes)
-	 * cert[164...292] = Signature (128bytes)
+	 * cert[1..129] = public modulus (128 bytes)
+	 * cert[130...248] = Signature (128bytes)
 	 */
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey) {
-		byte[] byteTuple = new byte[163]; //TODO: Check length
+		byte[] byteTuple = new byte[1 + cv.PUBMODULUS];
 		byteTuple[0] = type.code;
-		byte[] pk = publicKey.getEncoded();
-		System.arraycopy(pk, 0, byteTuple, 1, pk.length);
+		byte[] pk = publicKey.getModulus().toByteArray();
+		System.arraycopy(pk, 1, byteTuple, 1, pk.length - 1);
 		
 		byte[] signature = signRaw(byteTuple);
 		
-		byte[] cert = new byte[163 + signature.length];
+		byte[] cert = new byte[byteTuple.length + signature.length];
 		System.arraycopy(byteTuple, 0, cert, 0, byteTuple.length);
 		System.arraycopy(signature, 0, cert, byteTuple.length, signature.length);
 		return cert;
@@ -76,22 +76,22 @@ public class CertAuth {
 	/* TODO: Change exp to short
 	 * Certificate with expdate is a byte array that looks like:
 	 * cert[0] = type (0 = smartcard, 1 = rentalterm, 2 = vehicleterm)
-	 * cert[1..163] = rsapublickey (length 162bytes)
-	 * cert[164..172] = expiration date of type long (8bytes)
-	 * cert[173...301] = Signature (128bytes)
+	 * cert[1..129] = public modulus (128 bytes)
+	 * cert[130...138] = expdate (long = 8bytes)
+	 * cert[139...267] = Signature (128bytes)
 	 */
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey, long exp) {
-		byte[] byteTuple = new byte[171]; //TODO: Check length
+		byte[] byteTuple = new byte[1 + cv.PUBMODULUS + cv.EXP_LENGTH];
 		byteTuple[0] = type.code;
-		byte[] pk = publicKey.getEncoded(); //pubkey = 162bytes
-		System.arraycopy(pk, 0, byteTuple, 1, pk.length);
-		byte[] expbytes = ByteBuffer.allocate(8).putLong(exp).array();
+		byte[] pk = publicKey.getModulus().toByteArray(); 
+		System.arraycopy(pk, 1, byteTuple, 1, pk.length - 1);
+		byte[] expbytes = ByteBuffer.allocate(8).putLong(exp).array(); // long -> bytes
 		
-		System.arraycopy(expbytes, 0, byteTuple, 1 + pk.length, expbytes.length);
+		System.arraycopy(expbytes, 0, byteTuple, pk.length, expbytes.length);
 		
 		byte[] signature = signRaw(byteTuple); //signature = 128bytes
 		
-		byte[] cert = new byte[171 + signature.length];
+		byte[] cert = new byte[1 + cv.PUBMODULUS + cv.EXP_LENGTH + signature.length];
 		System.arraycopy(byteTuple, 0, cert, 0, byteTuple.length);
 		System.arraycopy(signature, 0, cert, byteTuple.length, signature.length);
 		return cert;
