@@ -16,9 +16,10 @@ public class ConstantValues {
 	
 	public int EXPIRATIONSTARTPOS = 129;
 	
-	public int CARDCERT_LENGTH = 265;
-	public int TERMINALCERT_LENGTH = 257;
-	public int CARDDATA_LENGTH = 260;
+	public int CARDCERT_LENGTH = 265; //137 (type, modulo, expiration) +128 (signature)	
+	public int TERMINALCERT_LENGTH = 257; //1 (type) + 128 (modulo) + 128 (signature)
+	public int CARDCERTDATA_LENGTH = 137; //1 (type) + 128 (modulo) + 8 (expiration)
+	public int CARDDATA_LENGTH = 160; //16 (nonce) + 16 (Ktemp) + 128 (SKs)
 	
 
 
