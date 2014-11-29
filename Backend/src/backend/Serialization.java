@@ -99,6 +99,20 @@ public class Serialization {
 		
 		return newPack;
 	}
+	
+	//combine 4 packages
+	public byte[] combineThePackage(byte[] package1, byte[] package2, byte[] package3, byte[] package4){
+		byte[] newPack = new byte[package1.length + package2.length + package3.length + package4.length];
+		
+		System.arraycopy(package1, 0, newPack, 0, package1.length);
+		System.arraycopy(package2, 0, newPack, package1.length, package2.length);
+		System.arraycopy(package3, 0, newPack, package1.length + package2.length, package3.length);
+		System.arraycopy(package4, 0, newPack, package1.length + package2.length + package3.length, package4.length);
+		
+		return newPack;
+	}
+	
+	
 
 	
 	//get the expiration date from the certificate

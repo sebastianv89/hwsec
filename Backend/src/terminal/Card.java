@@ -10,6 +10,9 @@ public class Card {
 	int revocation;
 	String cardPublicKey;
 	
+	
+	
+	
 	public Card(){
 		
 	}

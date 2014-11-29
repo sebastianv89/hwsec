@@ -13,6 +13,8 @@ public class ConstantValues {
 	
 	public int EXPIRATIONSTARTPOS = 129;
 	
+	public int CARDCERT_LENGTH = 265;
+	public int TERMINALCERT_LENGTH = 257;
 
 
 }

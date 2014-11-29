@@ -7,13 +7,6 @@ import java.util.Date;
 
 import terminal.Card;
 
-/* TODO: Change exp to short
- * Certificate with expdate is a byte array that looks like:
- * cert[0] = type (0 = smartcard, 1 = rentalterm, 2 = vehicleterm)
- * cert[1..163] = rsapublickey (length 162bytes)
- * cert[164..172] = expiration date of type long (8bytes)
- * cert[173...301] = Signature (128bytes)
- */ 
 
 /*ALGO:  
  * 		1. get cardCert from smartcard and do mutual authentication between Rental Terminal - Smartcard 
@@ -122,17 +115,10 @@ public class BackendRentalTerminal {
 	
 	//Refund the kilometers
 	public Card refundKilometers(){
-		//1. read from the card and do mutual authentication
-		byte[] cert = MutualAuthenticationRT_S();
-		
-		//2. get card data from database
-		Card card = getCardDB(cert);
-		
-		//3. do the refund
-		card.setKilometers(0);
-		
-		/*4. update to database  */
-		db.updateKilometersExpiration(0, card.getExpDate(), card.getID());
+		byte[] cert = MutualAuthenticationRT_S(); 		//1. read from the card and do mutual authentication
+		Card card = getCardDB(cert); //2. get card data from database
+		card.setKilometers(0); 		//3. do the refund
+		db.updateKilometersExpiration(0, card.getExpDate(), card.getID());  /*4. update to database  */
 				
 		//TODO update to Card
 		return card;
@@ -162,7 +148,6 @@ public class BackendRentalTerminal {
 		}
 		return card;
 	}
-	
 	
 
 	//convert long date to string date

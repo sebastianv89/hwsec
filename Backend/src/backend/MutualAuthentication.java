@@ -42,16 +42,16 @@ public class MutualAuthentication {
 	 * 12. Send the session key to card (later)
 	 */
 	
-	public void RentalTerminalMutualAuth(){
+	public void TerminalMutualAuth(byte[] cert, RSAPrivateKey privKey){
 		
-		byte[] rtCert = readFiles("RTCert");  //Read Certificate for Rental Terminal
+		//byte[] rtCert = readFiles(certFilename);  //Read Certificate for  Terminal
 		byte[] nounce = util.GenerateRandomBytes(NOUNCE_LENGTH); //generate nonces
 		
 		//Split the certificate into two package
 		byte[] pack1 = new byte[CV.PUBMODULUS + 1];  //129
-		System.arraycopy(rtCert, 0, pack1, 0, pack1.length); 
+		System.arraycopy(cert, 0, pack1, 0, pack1.length); 
 		byte[] pack2 = new byte[CV.SIG_LENGTH + NOUNCE_LENGTH]; //SIGNATURE + NOUNCE = 144
-		System.arraycopy(rtCert, CV.PUBMODULUS+1, pack2, 0, CV.SIG_LENGTH);
+		System.arraycopy(cert, CV.PUBMODULUS+1, pack2, 0, CV.SIG_LENGTH);
 		System.arraycopy(nounce, 0, pack2, CV.SIG_LENGTH, nounce.length);
 		
 		//TODO: send to card
@@ -63,11 +63,11 @@ public class MutualAuthentication {
 		byte[] scPack4 = new byte[128]; //received 4nd package from sc
 		
 		//get The private Key
-		RSAPrivateKey rtPrivKey = GetPrivateKeyFromFile("RTPrivateKey");
-		byte[] scDataPack1 = RSADecrypt(scPack1, rtPrivKey);
-		byte[] scDataPack2 = RSADecrypt(scPack2, rtPrivKey);
-		byte[] scDataPack3 = RSADecrypt(scPack3, rtPrivKey);
-		byte[] scDataPack4 = RSADecrypt(scPack4, rtPrivKey);
+		//RSAPrivateKey rtPrivKey = GetPrivateKeyFromFile("RTPrivateKey");
+		byte[] scDataPack1 = RSADecrypt(scPack1, privKey);
+		byte[] scDataPack2 = RSADecrypt(scPack2, privKey);
+		byte[] scDataPack3 = RSADecrypt(scPack3, privKey);
+		byte[] scDataPack4 = RSADecrypt(scPack4, privKey);
 		
 		//combine the decrypted package
 		byte[] scPack = serial.combineThePackage(scDataPack1, scDataPack2, scDataPack3, scDataPack4);
@@ -77,14 +77,14 @@ public class MutualAuthentication {
 		
 		
 		
-		//for testing purposes
+		/*//for testing purposes
 		new Random().nextBytes(scPack1);
 		new Random().nextBytes(scPack2);
 		RSAPublicKey rtPubKey = GetPublicKeyFromFile("RTPublicKey");
 		System.out.println(Arrays.toString(scPack));
 		byte[] enc = RSAEncrypt(scPack, rtPubKey);
 		System.out.println(Arrays.toString(enc));
-		System.out.println(enc.length);
+		System.out.println(enc.length);*/
 		
 		
 		
@@ -94,7 +94,7 @@ public class MutualAuthentication {
 	
 	public static void main(String[] args) {
 		MutualAuthentication ma = new MutualAuthentication();
-		ma.RentalTerminalMutualAuth();
+		ma.TerminalMutualAuth(null, null);
 	}
 	
 	private byte[] readFiles(String filename) {
