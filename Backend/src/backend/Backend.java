@@ -49,7 +49,7 @@ public class Backend {
 				exp);
 
 		// get the CA verification key
-		byte[] certVerifKey = ca.getVerificationKey().getEncoded();
+		RSAPublicKey certVerifKey = ca.getVerificationKey();
 
 		// Dont need to store it since we have not given out the card yet!
 		
