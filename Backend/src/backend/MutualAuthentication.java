@@ -31,16 +31,16 @@ public class MutualAuthentication {
 	
 	/**
 	 * Rental Terminal Authentication:
-	 * 1. Read RT Certificate from file
-	 * 2. Generate Nonce
-	 * 3. Combine those two and split them into two package;
-	 * 4. Send those two package to card
+	 * 1. Read RT Certificate from file (OK)
+	 * 2. Generate Nonce (OK)
+	 * 3. Combine those two and split them into two package; (OK)
+	 * 4. Send those two package to card (OK)
 	 * 5. Received 4 packages from smartcard (ask the card for the every next package; mentioned the package number in P2)
-	 * 6. Read RT Priv Key from file
-	 * 7. Decrypt every packages
-	 * 8. Combine the decrypted packages
-	 * 9. Split the smartcard's certificate (certS) and Data (N, Ktmp) from the decrypted packages
-	 * 10.Verify the Certificate (with the CASignKey - from file - and check the revocation status)
+	 * 6. Read RT Priv Key from file (OK)
+	 * 7. Decrypt every packages (OK)
+	 * 8. Combine the decrypted packages (OK)
+	 * 9. Split the smartcard's certificate (certS) and Data (N, Ktmp) from the decrypted packages (OK)
+	 * 10.Verify the Certificate (with the CAPublicKey - from file - and check the revocation status)
 	 * 11. Verify the card Signature (data, cardPubKey, dataSignature)
 	 * 12. Send the session key to card (later)
 	 */
@@ -76,8 +76,10 @@ public class MutualAuthentication {
 		byte[] scPack = serial.combineThePackage(scDataPack1, scDataPack2, scDataPack3, scDataPack4);
 		
 		//split card certificate and the card data {N, Ktmp}
-		
-		
+		byte[] cardCert = new byte[CV.CARDCERT_LENGTH];
+		System.arraycopy(scPack, 0, cardCert, 0, CV.CARDCERT_LENGTH);
+		byte[] cardData = new byte[CV.CARDDATA_LENGTH];
+		System.arraycopy(scPack, CV.CARDCERT_LENGTH, cardData, 0, CV.CARDDATA_LENGTH);
 		
 		
 		/*//for testing purposes
@@ -93,6 +95,14 @@ public class MutualAuthentication {
 		
 		
 		
+	}
+	
+	public boolean certVerify(byte[] cert){
+		boolean result = false;
+		byte[] CApubKey = readFiles("CAPublicKey");
+		
+		
+		return result;
 	}
 	
 	public boolean sigVerif(byte[] data, byte[] pubKey, byte[] signature) {
