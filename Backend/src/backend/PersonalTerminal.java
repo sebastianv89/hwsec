@@ -14,8 +14,8 @@ import java.security.spec.*;
 import java.security.interfaces.*;
 
 import javax.smartcardio.*;
-import javax.smartcardio.CommandAPDU;
-import javax.smartcardio.ResponseAPDU;
+
+import com.rental.terminal.CardUtils;
 
 public class PersonalTerminal {
 	private static final String ch = null;
@@ -30,7 +30,7 @@ public class PersonalTerminal {
 	public static void main(String[] args){
 		//InitData nc = new InitData(cert, keypair.getPrivate(), certVerifKey);
 		Backend bk = new Backend();
-		InitData nc = bk.registerNewCard(8);
+		InitData nc = bk.registerNewCard();
 		
 		byte[] pk = nc.privateKey;
 		byte[] c = nc.certificate;
@@ -74,16 +74,16 @@ public class PersonalTerminal {
 		}
 	}
 		
-		public ResponseAPDU transmitAPDU(final CommandAPDU cAPDU);
+		/*public abstract ResponseAPDU transmitAPDU(final CommandAPDU cAPDU);
 			throws CardException, CardNotFoundException{
 				
 				
 				ResponseAPDU resp = ch.transmit(new CommandAPDU(0X00, 0XA4, 0X00, 0X90, new byte[]{0x54, 0x01}) );
 				}
-			
+			*/
+	
+	
 		}
 		
 		
 		
-	}
-}

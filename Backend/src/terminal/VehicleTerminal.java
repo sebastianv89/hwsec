@@ -1,5 +1,7 @@
 package terminal;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -9,15 +11,31 @@ import javax.smartcardio.CardTerminals;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.TerminalFactory;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
 
 import applet.APDU;
+import applet.Cipher;
+import applet.Signature;
 import backend.Backend;
 import backend.InitData;
 
 public class VehicleTerminal {
 	
+	private static final String RP = null;
 	private boolean ready;
+	private Object rsaHandler;
+	byte[] tmp;
+		short temp_short_1;
+		short temp_short_2;
+		
+	Cipher cipher; //for encryption and decryption
+	Signature signature_instance; // Signature instance for signing and verifying
+
+	
+
 	
 	public static void main(String[] args){
 		Backend bk = new Backend();
@@ -54,6 +72,10 @@ public class VehicleTerminal {
 			
 			return false;
 		}
+	public void IssuingCommandsHandler(VehicleTerminal vt) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
+	}
+
+		
 
 		public boolean MutualAuthenticationVT_S(){
 			boolean status = true;
@@ -63,7 +85,7 @@ public class VehicleTerminal {
 			
 			//generating random number (nonce)
 			SecureRandom random = new SecureRandom();
-			byte bytes[] = new bytes[20];
+			byte bytes[] = new byte[20];
 			random.nextBytes(bytes);
 			
 			Random rnd = Random.getInstance(Random.ALG_SECURE_RANDOM);
@@ -71,15 +93,7 @@ public class VehicleTerminal {
 		}
 		
 
-public VehicleTerminal getVehicleTerminal() throws Exception{
-	VehicleTerminal vt = null;
-	TerminalFactory terminalfactory = TerminalFactory.getDefault();
-	VehicleTerminals vehicleTerminals = terminalFactory.terminals();
-	
-	if (vehicleTerminals.list().isEmpty() == false){
-}
 
-}
 
 // communication with the smartcard
 //have to create two temp buffer on smartcard for the process
@@ -89,7 +103,7 @@ public VehicleTerminal getVehicleTerminal() throws Exception{
  * @param offset
  * @param length
  */
-/*private void readBuffer(APDU apdu, byte[] dest, short offset, short length) {
+private void readBuffer(APDU apdu, byte[] dest, short offset, short length) {
 	byte[] buf = apdu.getBuffer();
 	temp_short_1 = apdu.setIncomingAndReceive();
 	temp_short_2 = 0;
@@ -99,7 +113,7 @@ public VehicleTerminal getVehicleTerminal() throws Exception{
 		offset += temp_short_1;
 		temp_short_1 = (short) apdu.receiveBytes(OFFSET_CDATA);
 		Util.arrayCopy(Buff, OFFSET_CDATA, dest, offset, temp_short_1);
-	}*/
+	}
 
 
 SecureRandom random = new SecureRandom();
@@ -107,7 +121,16 @@ SecureRandom random = new SecureRandom();
 		random.nextBytes(random_nonce);
 		capdu = new CommandAPDU(CLA_ISSUE, SET_RANDOM_DATA_NONCE, (byte) 0, (byte) 0, random_nonce, 8);
 		terminal.sendCommandAPDU(capdu); 
+		}
+/*private String convertLongDateToString(long expDate){
+    Date date=new Date(expDate);
+    SimpleDateFormat df2 = new SimpleDateFormat("dd/MM/yy");
+    String dateText = df2.format(date);
+    System.out.println(dateText);
+    return dateText;*/
+}
+
 
 	}
-}
+
 
