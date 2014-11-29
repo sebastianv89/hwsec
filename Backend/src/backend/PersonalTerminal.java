@@ -34,6 +34,9 @@ public class PersonalTerminal {
 	public static final int ISO7816_SW_NO_ERROR = 0x900;
 	public static final int ISO7816_SW_CONDITIONS_NOT_SATISIFIED = 0x6985;
 
+	// Constants
+	ConstantValues cv;
+
 	// Connection with the card
 	private CardChannel applet;
 
@@ -50,6 +53,7 @@ public class PersonalTerminal {
 	 */
 	public PersonalTerminal() {
 		backend = new Backend();
+		cv = new ConstantValues();
 
 		ready = false;
 		stopThread = false;
@@ -64,7 +68,7 @@ public class PersonalTerminal {
 		personalize(data.privateKey, data.caVerifKey, data.certificate);
 
 		// card is now personalized
-		
+
 		stopThread = true;
 	}
 
@@ -101,7 +105,7 @@ public class PersonalTerminal {
 			}
 
 			// send data part of the smartcard certificate
-			int certDataLen = 1 + ConstantValues.PUBMODULUS + ConstantValues.EXP_LENGTH;
+			int certDataLen = 1 + cv.PUBMODULUS + cv.EXP_LENGTH;
 			byte[] certData = new byte[certDataLen];
 			System.arraycopy(cert, 0, certData, 0, certDataLen);
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_CERT_DATA,
@@ -114,8 +118,8 @@ public class PersonalTerminal {
 			}
 
 			// send signature part of the smartcard certificate
-			byte[] certSig = new byte[ConstantValues.SIG_LENGTH];
-			System.arraycopy(cert, certDataLen, certSig, 0, ConstantValues.SIG_LENGTH);
+			byte[] certSig = new byte[cv.SIG_LENGTH];
+			System.arraycopy(cert, certDataLen, certSig, 0, cv.SIG_LENGTH);
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_CERT_SIG,
 					0x00, 0x00, certSig);
 			System.out.println(capdu + "Data: " + capdu.getData());
