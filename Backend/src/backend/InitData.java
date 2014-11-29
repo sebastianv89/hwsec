@@ -1,6 +1,7 @@
 package backend;
 
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 
 /**
  * Wrapper class for the initial data that is to be sent to the
@@ -12,8 +13,7 @@ public class InitData {
 	
 	public byte[] certificate;
 	public RSAPrivateKey privateKey;
-	public byte[] secretKey;
-	public byte[] caVerifKey;
+	public RSAPublicKey caVerifKey;
 
 	public InitData(byte[] certificate, RSAPrivateKey privateKey) {
 		this.certificate = certificate;
@@ -21,7 +21,7 @@ public class InitData {
 	}
 	
 
-	public InitData(byte[] certificate, RSAPrivateKey privateKey, byte[] caVerifKey) {
+	public InitData(byte[] certificate, RSAPrivateKey privateKey, RSAPublicKey caVerifKey) {
 		this.certificate = certificate;
 		this.privateKey = privateKey;
 		this.caVerifKey = caVerifKey;

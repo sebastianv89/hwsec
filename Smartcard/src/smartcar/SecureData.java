@@ -1,6 +1,5 @@
 package smartcar;
 
-import javacard.framework.ISO7816;
 import javacard.framework.Util;
 import javacard.security.KeyBuilder;
 import javacard.security.RSAPrivateKey;
@@ -13,7 +12,7 @@ import javacardx.crypto.Cipher;
 public class SecureData {
 
 	// sizes of data
-	public static final short SIZE_CERTIFICATE_DATA = 131;
+	public static final short SIZE_CERTIFICATE_DATA = 137;
 	public static final short SIZE_CERTIFICATE_SIG = 128;
 	public static final short SIZE_RSAKEY_EXP = 128;
 	public static final short SIZE_RSAKEY_MOD = 128;
