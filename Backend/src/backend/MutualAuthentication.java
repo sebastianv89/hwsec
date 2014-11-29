@@ -3,15 +3,18 @@ package backend;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
-import java.util.Random;
 
 import javax.crypto.Cipher;
 
@@ -90,6 +93,42 @@ public class MutualAuthentication {
 		
 		
 		
+	}
+	
+	public boolean sigVerif(byte[] data, byte[] pubKey, byte[] signature) {
+		// Convert bytekey (public Modulus into a RSAPublicKey
+		RSAPublicKeySpec spec = new RSAPublicKeySpec(new BigInteger(pubKey), CV.PUBEXPONENT_BYTE);
+		RSAPublicKey pub = null;
+		try {
+			KeyFactory factory = KeyFactory.getInstance("RSA");
+			pub = (RSAPublicKey) factory.generatePublic(spec);
+		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		Signature sig;
+		boolean result = false;
+		try {
+			sig = Signature.getInstance("MD5WithRSA");
+			sig.initVerify(pub);
+			sig.update(data);
+			result = sig.verify(signature);
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SignatureException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return result;
 	}
 	
 	public static void main(String[] args) {
