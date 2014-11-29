@@ -99,6 +99,7 @@ public class Serialization {
 		
 		return newPack;
 	}
+
 	
 	//get the expiration date from the certificate
 	public byte[] getExpFromCert(byte[] cert){
