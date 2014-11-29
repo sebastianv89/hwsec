@@ -13,6 +13,8 @@ import java.security.spec.X509EncodedKeySpec;
  * To serialize and deserialize the key
  */
 public class Serialization {
+	ConstantValues CV = new ConstantValues();
+	
 	public Serialization(){
 		
 	}
@@ -82,5 +84,19 @@ public class Serialization {
 		return pubkey;
 	}
 	
+	//get the expiration date from the certificate
+	public byte[] getExpFromCert(byte[] cert){
+		byte[] exp = new byte[CV.EXP_LENGTH];
+		System.arraycopy(cert, 164, exp, 0, CV.EXP_LENGTH);
+		return exp;
+	}
+
+	//get public key from certificate
+	public byte[] getPublicKeyFromCert(byte[] cert){
+		byte[] pubKey = new byte[CV.RSAPUBLICKEYLENGTH];
+		System.arraycopy(cert, 1, pubKey, 0, CV.RSAPUBLICKEYLENGTH);
+		return pubKey;		
+	}
+
 
 }
