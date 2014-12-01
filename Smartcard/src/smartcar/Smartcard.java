@@ -108,6 +108,7 @@ public class Smartcard extends Applet implements ISO7816 {
 				+ SecureData.SIZE_AES_KEY + SecureData.SIZE_RSA_SIG;
 		tmp = JCSystem.makeTransientByteArray(maxLength,
 				JCSystem.CLEAR_ON_DESELECT);
+		km = new Kilometer();
 	}
 
 	public void process(APDU apdu) {
@@ -408,10 +409,10 @@ public class Smartcard extends Applet implements ISO7816 {
 		if (len != 1 || tmp[0] != MSG_IGNITION) {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}
-
+		
 		if (km.start()) {
 			setIgnited(true);
-
+			
 			// reply "ignition ok"
 			tmp[0] = MSG_IGNITION_OK;
 			Util.setShort(tmp, (short) 1, km.getKm());
@@ -429,7 +430,9 @@ public class Smartcard extends Applet implements ISO7816 {
 			// reply "not enough km"
 			tmp[0] = MSG_NOT_ENOUGH_KM;
 			len = 1;
+			
 			sd.sign(tmp, (short) 0, len, tmp, len);
+			
 			len += SecureData.SIZE_RSA_SIG;
 			/*
 			 * FIXME: encryption len = sd.sessionEncrypt(tmp, (short) 0, len,

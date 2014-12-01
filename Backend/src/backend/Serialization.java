@@ -32,12 +32,16 @@ public class Serialization {
 		
 	
 	public String SerializeByteKey(byte[] bytePubKey){
-		X509EncodedKeySpec pubspec = new X509EncodedKeySpec(bytePubKey);
-		KeyFactory factory;
+		// Convert bytekey (public Modulus into a RSAPublicKey
+		byte[] padded = new byte[129];
+		padded[0] = 0;
+		System.arraycopy(bytePubKey, 0, padded, 1, 128);
+		RSAPublicKeySpec spec = new RSAPublicKeySpec(new BigInteger(padded), CV.PUBEXPONENT_BYTE);
+		
 		RSAPublicKey publicKey = null;
 		try {
-			factory = KeyFactory.getInstance("RSA");
-			publicKey = (RSAPublicKey) factory.generatePublic(pubspec);
+			KeyFactory factory = KeyFactory.getInstance("RSA");
+			publicKey = (RSAPublicKey) factory.generatePublic(spec);
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

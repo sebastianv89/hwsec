@@ -3,11 +3,13 @@ package backend;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Calendar;
 import java.util.Date;
@@ -131,6 +133,7 @@ public class Backend {
 		// first get the pubkey fromt the cert
 		byte[] publicKey = new byte[CV.RSAPUBLICKEYLENGTH];
 		System.arraycopy(cert, 1, publicKey, 0, CV.RSAPUBLICKEYLENGTH);
+		System.out.println(publicKey.length);
 		
 		Serialization serialize = new Serialization();
 		String strPublicKey = serialize.SerializeByteKey(publicKey);
@@ -143,7 +146,7 @@ public class Backend {
 		long exp = getExpirationDate();
 		
 		// Convert bytes to RSAPublicKey
-		X509EncodedKeySpec pubspec = new X509EncodedKeySpec(publicKey);
+		/*X509EncodedKeySpec pubspec = new X509EncodedKeySpec(publicKey);
 		KeyFactory factory;
 		try {
 			factory = KeyFactory.getInstance("RSA");
@@ -154,11 +157,35 @@ public class Backend {
 		} catch (InvalidKeySpecException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
+		rsaPublicKey = generatePK(publicKey);
 		
 		
 		// return the new certificate
 		return ca.makeCert(CertAuth.TYPE.SMARTCARD, rsaPublicKey, exp);
+	}
+	
+	//generate public key from modulo
+	private RSAPublicKey generatePK(byte[] bytePubKey){
+		// Convert bytekey (public Modulus into a RSAPublicKey
+		byte[] padded = new byte[129];
+		padded[0] = 0;
+		System.arraycopy(bytePubKey, 0, padded, 1, 128);
+		RSAPublicKeySpec spec = new RSAPublicKeySpec(new BigInteger(padded), CV.PUBEXPONENT_BYTE);
+		
+		RSAPublicKey publicKey = null;
+		try {
+			KeyFactory factory = KeyFactory.getInstance("RSA");
+			publicKey = (RSAPublicKey) factory.generatePublic(spec);
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return publicKey;
+		
 	}
 	
 	/**

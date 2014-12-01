@@ -34,12 +34,11 @@ public class CardTerminalCommunication {
 		public static final byte INS_RT_TOPUP = 0x52;
 		public static final byte INS_RT_REFUND = 0x54;
 		
-		//P2 parameter for message
-		public static final byte P2_DEF = 0x00;
-		public static final byte P2_MSG1 = 0x01;
-		public static final byte P2_MSG2 = 0x02;
-		public static final byte P2_MSG3 = 0x03;
-		public static final byte P2_MSG4 = 0x04;
+		public static final byte INS_RT_RENEW_CERT_1 = 0x50;
+		public static final byte INS_RT_RENEW_CERT_2 = 0x52;
+		public static final byte INS_RT_TOPUP_KM = 0x54;
+		public static final byte INS_RT_REFUND_KM = 0x56;
+		
 
 		// Response status words (encoded as integers)
 		public static final int ISO7816_SW_NO_ERROR = 0x9000;

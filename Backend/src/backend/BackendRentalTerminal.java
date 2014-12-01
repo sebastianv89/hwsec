@@ -28,6 +28,7 @@ public class BackendRentalTerminal {
 	ByteUtils byteUtil = new ByteUtils();
 	CardTerminalCommunication CT = new CardTerminalCommunication();
 	MutualAuthentication MA = new MutualAuthentication();
+	ConstantValues CV = new ConstantValues();
 	
 	public BackendRentalTerminal(){
 		
@@ -44,7 +45,10 @@ public class BackendRentalTerminal {
 		RSAPrivateKey rtPrivKey = null;
 		try {
 			rtPrivKey = (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(privKeyByte));
-		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+		} catch ( NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -87,38 +91,68 @@ public class BackendRentalTerminal {
 	 * NOTE: for the database, the kilometers saved is the total kilometers that ever added to the card
 	 * without the ticking
 	 */
-	public Card TopUpCard(short cardKm){
+	
+	public Card AuthenticateCard(){
 		//1. read from the card and do mutual authentication
 		byte[] cert = MA.TerminalMutualAuth(GetRTCert(), GetRTPrivateKey());
-		
-		short km = 0; //read this from card
 		byte[] newCert = null;
-		
-		/* Get card from database  */
-		Card card = getCardDB(cert);
-		
+		Card card = new Card();
+		/* renew the certificate */
 		try {
-			/* renew the certificate */
 			newCert = be.renewCertificate(cert);
+			//split the certificate into two packages
+			byte[] pack1 = new byte[CV.PUBMODULUS + 1 + CV.EXP_LENGTH];  //1 + 128 + 8
+			System.arraycopy(newCert, 0, pack1, 0, pack1.length); 
 			
+			System.out.println(byteUtil.toHexString(pack1));
+			byte[] pack2 = new byte[CV.SIG_LENGTH]; //SIGNATURE 128
+			System.arraycopy(newCert, CV.PUBMODULUS + 1 + CV.EXP_LENGTH, pack2, 0, CV.SIG_LENGTH);
+			System.out.println(byteUtil.toHexString(pack2));
+			
+			//send the new cert to card
+			byte[] scPack1 = CT.sendToCard(pack1, CT.INS_RT_RENEW_CERT_1);
+			byte[] scPack2 = CT.sendToCard(pack2, CT.INS_RT_RENEW_CERT_2); //here I receive the km signed and encrypted
+			
+			System.out.println(byteUtil.toHexString(scPack2));
+			//decrypt scPack2
+			//short km = 0;
+			//card.setKilometers(km);
 			//extract expiration date from the new certificate and convert it to Long 
 			long expNew  = byteUtil.bytesToLong(serial.getExpFromCert(newCert));
-			//convert the long date to string
-			String expString = convertLongDateToString(expNew);
-			card.setExpiration(expNew);
-			card.setStringExpiration(expString);
-			
-			/* update to database  */
-			db.updateKilometersExpiration(card.getKilometers()+ cardKm, expNew, card.getID());
-				
-			//TODO update to the smartcard 
-			card.setKilometers((short) (km + cardKm));
-			
 			
 		} catch (RevokedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return card;
+	}
+	
+	public Card TopUpCard(short cardKm){
+		
+		// Get card from database  
+		Card card = AuthenticateCard();//getCardDB(cert);
+		
+	//	try {
+			
+			
+			
+		/*	//convert the long date to string
+			String expString = convertLongDateToString(expNew);
+			card.setExpiration(expNew);
+			card.setStringExpiration(expString);
+			
+			// update to database  
+			//db.updateKilometersExpiration(card.getKilometers()+ cardKm, expNew, card.getID());
+				
+			//TODO update to the smartcard 
+			card.setKilometers((short) (km + cardKm));*/
+			
+			
+			
+		/*} catch (RevokedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
 		return card;
 	}
 	
@@ -130,7 +164,7 @@ public class BackendRentalTerminal {
 		
 		Card card = getCardDB(cert); //2. get card data from database
 		card.setKilometers((short)0); 		//3. do the refund
-		db.updateKilometersExpiration(0, card.getExpDate(), card.getID());  /*4. update to database  */
+		//db.updateKilometersExpiration(0, card.getExpDate(), card.getID());  /*4. update to database  */
 				
 		//TODO update to Card
 		return card;

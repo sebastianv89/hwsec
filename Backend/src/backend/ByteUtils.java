@@ -53,7 +53,7 @@ public class ByteUtils {
 	}
 
 	/** Get bytes in hexadecimal String */
-	String toHexString(byte[] in) {
+	public String toHexString(byte[] in) {
 		StringBuilder out = new StringBuilder(2 * in.length);
 		for (int i = 0; i < in.length; i++) {
 			out.append(String.format("%02x ", (in[i] & 0xFF)));

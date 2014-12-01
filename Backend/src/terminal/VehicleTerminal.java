@@ -93,6 +93,7 @@ public class VehicleTerminal {
 		readCertificate("VTCert");
 		
 		cv = new ConstantValues();
+		bu = new ByteUtils();
 
 		ready = false;
 		stopThread = false;
@@ -104,6 +105,7 @@ public class VehicleTerminal {
 			;
 
 		mutualAuthentication();
+		startIgnition();
 
 	}
 	
@@ -113,7 +115,7 @@ public class VehicleTerminal {
 	 * 
 	 * @return byte[] cardResponse
 	 */
-	private byte[] sendToCard(byte data, byte instruction, byte[] sessionKey) { 
+	private byte[] sendToCard(byte[] data, byte instruction, byte[] sessionKey) { 
 		//TODO: Symmetric crypto with the session key
 		CommandAPDU capdu;
 		ResponseAPDU rapdu = null;
@@ -122,7 +124,7 @@ public class VehicleTerminal {
 			// send private exponent of the smartcard signature key
 			capdu = new CommandAPDU(CLA_CRYPTO, instruction, 0x00,
 					0x00, data);
-			System.out.println(capdu + " Data: ");
+			System.out.println(capdu + " Data: " + bu.toHexString(data));
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
@@ -161,34 +163,39 @@ public class VehicleTerminal {
 	 * We receive a signal here when the card wants to ignite the vehicle
 	 */
 	private void startIgnition() {
-		byte[] ignitionReply = sendToCard(MSG_IGNITION, INS_VT_START, sessionKey);
+		byte[] ignition = new byte[1];
+		ignition[0] = MSG_IGNITION;
+		byte[] ignitionReply = sendToCard(ignition, INS_VT_START, sessionKey);
+		
 		// Split this block into: reply data and signature
 		byte[] rData = new byte[3]; //we expect iR[0] for the status msg, plus a short "km" (2 bytes)
-		System.arraycopy(ignitionReply, 0, rData, 0, 3);
-		byte[] signature = new byte[128];
-		System.arraycopy(ignitionReply, 3, signature, 0, 128);
-		boolean sigCheck = mu.sigVerif(rData, card.getCardModulus(), signature);
+		System.out.println(ignitionReply.length);
 		
-		if (sigCheck == true) { //if the signature matches
-			// Check what the message was ("ignition ok", km) or ("not enough km")
-			// Only in case of ignition ok, call startVehicle()
-			
-			if (rData[0] == MSG_IGNITION_OK ) { // Iginition ok
+		if (rData[0] == MSG_IGNITION_OK ) { // Iginition ok
+			System.arraycopy(ignitionReply, 0, rData, 0, 3);
+			byte[] signature = new byte[128];
+			System.arraycopy(ignitionReply, 3, signature, 0, 128);
+			boolean sigCheck = mu.sigVerif(rData, card.getCardModulus(), signature);
+
+			if (sigCheck == true) { //if the signature matches
+				// Check what the message was ("ignition ok", km) or ("not enough km")
+				// Only in case of ignition ok, call startVehicle()
 				byte[] km = new byte[2];
 				System.arraycopy(rData, 1, km, 0, 2);
 				ByteUtils bu = new ByteUtils();
 				short km2 = bu.bytesToShort(km);
 				card.setKilometers(km2);
 				addLogEntry(km, signature);
-			} else if (rData[0] == MSG_NOT_ENOUGH_KM ) {
-				addLogEntry("Not enough km".getBytes(), signature);
+
+			} else {
+				//TODO: Signature didnt match, abort ABORT LEAVE THE SHIP NOW!!!
+				card.setSessionKey(null);
+				//TODO: Display message
 			}
-			
-			
-		} else {
-			//TODO: Signature didnt match, abort ABORT LEAVE THE SHIP NOW!!!
-			card.setSessionKey(null);
-			//TODO: Display message
+		} else if (rData[0] == MSG_NOT_ENOUGH_KM ) {
+			byte[] signature = new byte[128];
+			System.arraycopy(ignitionReply, 1, signature, 0, 128);
+			addLogEntry("Not enough km".getBytes(), signature);
 		}
 	}
 	
@@ -444,6 +451,7 @@ public class VehicleTerminal {
 	
 	public static void main(String[] args) {
 		new VehicleTerminal();
+		
 	}
 }
 

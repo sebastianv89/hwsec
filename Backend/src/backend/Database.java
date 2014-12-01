@@ -166,7 +166,7 @@ public class Database {
 	 * @return the status of the revoked flag (true = revoked, false = not revoked)
 	 */
 	public boolean isRevoked(String strPublicKey) {
-		Statement stmt;
+		/*Statement stmt;
 		String rev = "";
 
 		try {
@@ -185,7 +185,8 @@ public class Database {
 			return rev.equals("1"); //Will return true if it equals 1 and false if it equals 0
 		} else {
 			return false; //TODO: We return false if the card is not found???
-		}
+		}*/
+		return false;
 	}
 
 	/**
