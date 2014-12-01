@@ -147,7 +147,7 @@ public class VehicleTerminal {
 	 * Authenticates with the card and sets the card modulus in a Card object
 	 */
 	private void mutualAuthentication() {
-		MutualAuthentication mu = new MutualAuthentication();
+//		MutualAuthentication mu = new MutualAuthentication();
 		byte[] cert = mu.TerminalMutualAuth(vtCertificate, vtPrivKey);
 		// get the card pubkey (=mod) from the certificate
 		byte[] cardmod = new byte[128];
