@@ -30,8 +30,8 @@ public class PersonalTerminal {
 	public static final byte INS_PT_PERSONALIZE_CERT_SIG = 0x16;
 
 	// Response status words (encoded as integers)
-	public static final int ISO7816_SW_NO_ERROR = 0x900;
-	public static final int ISO7816_SW_CONDITIONS_NOT_SATISIFIED = 0x6985;
+	public static final int ISO7816_SW_NO_ERROR = 0x9000;
+	public static final int ISO7816_SW_INS_NOT_SUPPORTED = 0x6d00;
 
 	// Constants
 	ConstantValues cv;
@@ -54,6 +54,7 @@ public class PersonalTerminal {
 	public PersonalTerminal() {
 		backend = new Backend();
 		cv = new ConstantValues();
+		bu = new ByteUtils();
 
 		ready = false;
 		stopThread = false;
@@ -82,10 +83,11 @@ public class PersonalTerminal {
 			byte[] exponent = bu.getBytes(signKey.getPrivateExponent());
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_SK, 0x00,
 					0x00, exponent);
+			System.out.println(capdu);
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
-				if (rapdu.getSW() == ISO7816_SW_CONDITIONS_NOT_SATISIFIED) {
+				if (rapdu.getSW() == ISO7816_SW_INS_NOT_SUPPORTED) {
 					throw new CardException(
 							"Card is (probably) already personalized");
 				}
@@ -144,9 +146,9 @@ public class PersonalTerminal {
 				CardTerminals ct = tf.terminals();
 				List<CardTerminal> cs = ct
 						.list(CardTerminals.State.CARD_PRESENT);
-				if (cs.isEmpty()) {
+				while (cs.isEmpty()) {
 					System.err.println("No terminals with a card found.");
-					return;
+					sleep(2000);
 				}
 
 				while (!stopThread) {
