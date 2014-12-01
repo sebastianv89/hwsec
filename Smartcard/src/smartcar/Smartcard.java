@@ -525,7 +525,9 @@ public class Smartcard extends Applet implements ISO7816 {
 		apdu.setIncomingAndReceive();
 		Util.arrayCopy(buf, OFFSET_CDATA, tmp, (short) 0,
 				SecureData.SIZE_CERT_DATA_CARD);
-		sd.checkCertUpdate(tmp, (short) 0);
+		if (!sd.checkCertUpdate(tmp, (short) 0)) {
+			ISOException.throwIt(SW_DATA_INVALID);
+		}
 	}
 
 	/**
