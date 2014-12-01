@@ -103,7 +103,7 @@ public class VehicleTerminal {
 		while (!ready)
 			;
 
-		
+		mutualAuthentication();
 
 	}
 	
@@ -122,6 +122,7 @@ public class VehicleTerminal {
 			// send private exponent of the smartcard signature key
 			capdu = new CommandAPDU(CLA_CRYPTO, instruction, 0x00,
 					0x00, data);
+			System.out.println(capdu + " Data: ");
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
@@ -440,6 +441,10 @@ public class VehicleTerminal {
 		}
 	}
 
+	
+	public static void main(String[] args) {
+		new VehicleTerminal();
+	}
 }
 
 

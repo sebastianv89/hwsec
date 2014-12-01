@@ -6,6 +6,7 @@ import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
 import javacard.framework.Util;
+import javacard.security.CryptoException;
 
 public class Smartcard extends Applet implements ISO7816 {
 
@@ -165,6 +166,9 @@ public class Smartcard extends Applet implements ISO7816 {
 					if (getLastIns() == INS_PT_PERSONALIZE_CERT_DATA) {
 						personalizeCertSig(apdu, buf);
 						sd.init();
+						if (!sd.validateOwnCert()) {
+							ISOException.throwIt(SW_WRONG_DATA);
+						}
 						state = STATE_PERSONALIZED;
 					} else {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
@@ -348,9 +352,15 @@ public class Smartcard extends Applet implements ISO7816 {
 				SecureData.SIZE_RSA_SIG);
 
 		// validate the terminal certificate
-		if (!sd.validateCert(tmp, (short) 0, tmp,
-				SecureData.SIZE_CERT_DATA_TERM)) {
-			ISOException.throwIt(SW_SECURITY_STATUS_NOT_SATISFIED);
+		try {
+			if (!sd.validateCert(tmp, (short) 0, tmp,
+					SecureData.SIZE_CERT_DATA_TERM)) {
+				ISOException.throwIt(SW_WRONG_DATA);
+			}
+		} catch (CryptoException e) {
+			Util.setShort(buf, (short) 0, e.getReason());
+			apdu.setOutgoingAndSend((short) 0, (short) 2);
+			ISOException.throwIt(SW_WRONG_P1P2);
 		}
 
 		// store certificate properties only after validation of the cert
@@ -508,7 +518,8 @@ public class Smartcard extends Applet implements ISO7816 {
 				SecureData.SIZE_RSA_SIG);
 
 		// check the certificate by validating its correctness
-		if (!sd.validateCert(tmp, (short) 0, tmp, SecureData.SIZE_CERT_DATA_CARD)) {
+		if (!sd.validateCert(tmp, (short) 0, tmp,
+				SecureData.SIZE_CERT_DATA_CARD)) {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}
 

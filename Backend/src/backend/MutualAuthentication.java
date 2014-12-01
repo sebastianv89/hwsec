@@ -47,7 +47,6 @@ public class MutualAuthentication {
 
 	public byte[] TerminalMutualAuth(byte[] cert, RSAPrivateKey privKey){
 		byte[] cardCert = null;
-		byte[] response1 = null;
 		byte[] scPack1 = null;
 		byte[] sessionKey = null;
 
@@ -65,7 +64,7 @@ public class MutualAuthentication {
 		CertAuth ca = new CertAuth();
 		byte[] sig = new byte[CV.SIG_LENGTH];
 		System.arraycopy(pack2, 0, sig, 0, CV.SIG_LENGTH);
-		System.err.println(sigVerif(pack1, ca.capubkey, sig));
+		System.err.println("checking signature of terminal: " + sigVerif(pack1, ca.capubkey, sig));
 
 		//TODO: send to card  // consider while loop. if the card is not responding ?
 		CT.sendToCard(pack1, CT.INS_AUTH_1);

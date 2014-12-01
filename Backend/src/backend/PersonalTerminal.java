@@ -32,6 +32,7 @@ public class PersonalTerminal {
 	// Response status words (encoded as integers)
 	public static final int ISO7816_SW_NO_ERROR = 0x9000;
 	public static final int ISO7816_SW_INS_NOT_SUPPORTED = 0x6d00;
+	public static final int ISO7816_SW_WRONG_DATA = 0x6A80;
 
 	// Constants
 	ConstantValues cv;
@@ -108,7 +109,7 @@ public class PersonalTerminal {
 			byte[] modulus = bu.getBytes(caVerifKey.getModulus());
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_VKCA, 0x00,
 					0x00, modulus);
-			System.out.println(capdu + "Data: " + bu.toHexString(capdu.getData()));
+			System.out.println(capdu + " Data: " + bu.toHexString(capdu.getData()));
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
@@ -121,7 +122,7 @@ public class PersonalTerminal {
 			System.arraycopy(cert, 0, certData, 0, certDataLen);
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_CERT_DATA,
 					0x00, 0x00, certData);
-			System.out.println(capdu + "Data: " + bu.toHexString(capdu.getData()));
+			System.out.println(capdu + " Data: " + bu.toHexString(capdu.getData()));
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
@@ -133,18 +134,20 @@ public class PersonalTerminal {
 			System.arraycopy(cert, certDataLen, certSig, 0, cv.SIG_LENGTH);
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_CERT_SIG,
 					0x00, 0x00, certSig);
-			System.out.println(capdu + "Data: " + bu.toHexString(capdu.getData()));
+			System.out.println(capdu + " Data: " + bu.toHexString(capdu.getData()));
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
+				if (rapdu.getSW() == ISO7816_SW_WRONG_DATA) {
+					System.err.println("Personalization failed, certificate was invalid");
+				}
 				throw new CardException(rapdu.toString());
 			}
 
-		} catch (Exception e) {
+		} catch (CardException e) {
 			System.err.println(e.getMessage());
 			e.printStackTrace();
-			// Revoke the card in the backend in case personalization failed
-			backend.revokeSmartcard(cert);
+			System.exit(1);
 		}
 	}
 

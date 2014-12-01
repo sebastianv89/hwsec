@@ -28,7 +28,6 @@ public class CardTerminalCommunication {
 		public static final byte INS_AUTH_4 = 0x26;
 		public static final byte INS_AUTH_5 = 0x28;
 		public static final byte INS_AUTH_6 = 0x2A;
-		public static final byte INS_AUTH_7 = 0x2C;
 		
 		//Rental Terminal APDU parameters
 		public static final byte INS_RT_REG = 0x50;
@@ -43,11 +42,12 @@ public class CardTerminalCommunication {
 		public static final byte P2_MSG4 = 0x04;
 
 		// Response status words (encoded as integers)
-		public static final int ISO7816_SW_NO_ERROR = 0x900;
-		public static final int ISO7816_SW_CONDITIONS_NOT_SATISIFIED = 0x6985;
+		public static final int ISO7816_SW_NO_ERROR = 0x9000;
+		public static final int ISO7816_SW_INS_NOT_SUPPORTED = 0x6D00;
 		
 		// Connection with the card
 		private CardChannel applet;
+		private ByteUtils bu;
 
 		private CardThread thread;
 		private Boolean ready;
@@ -55,7 +55,7 @@ public class CardTerminalCommunication {
 		
 		public CardTerminalCommunication(){
 			StartThread();
-			
+			bu = new ByteUtils();
 		}
 		
 		public void StartThread(){
@@ -89,14 +89,11 @@ public class CardTerminalCommunication {
 				// send private exponent of the smartcard signature key
 				capdu = new CommandAPDU(CLA_CRYPTO, instruction, 0x00,
 						0x00, data);
+				System.out.println(capdu + " Data: " + bu.toHexString(capdu.getData()));
 				rapdu = applet.transmit(capdu);
-				System.out.println(rapdu);
+				System.out.println(rapdu + " Data: " + bu.toHexString(rapdu.getData()));
 				if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
-					if (rapdu.getData() != null) { //if we got a reply
-						// return below
-					} else {
-						throw new CardException(rapdu.toString());
-					}
+					throw new CardException(rapdu.toString());
 				}
 			} catch (Exception e) {
 				System.err.println(e.getMessage());
@@ -122,14 +119,11 @@ public class CardTerminalCommunication {
 				// send private exponent of the smartcard signature key
 				capdu = new CommandAPDU(CLA_CRYPTO, instruction, 0x00,
 						0x00, data);
+				System.out.println(capdu + " Data: " + bu.toHexString(capdu.getData()));
 				rapdu = applet.transmit(capdu);
-				System.out.println(rapdu);
+				System.out.println(rapdu + " Data: " + bu.toHexString(rapdu.getData()));
 				if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
-					if (rapdu.getData() != null) { //if we got a reply
-						// return below
-					} else {
-						throw new CardException(rapdu.toString());
-					}
+					throw new CardException(rapdu.toString());
 				}
 			} catch (Exception e) {
 				System.err.println(e.getMessage());

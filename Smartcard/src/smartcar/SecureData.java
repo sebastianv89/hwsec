@@ -1,5 +1,7 @@
 package smartcar;
 
+import javacard.framework.ISO7816;
+import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
 import javacard.framework.Util;
 import javacard.security.AESKey;
@@ -24,8 +26,8 @@ public class SecureData {
 	public static final short SIZE_NONCE = 16;
 	public static final short SIZE_AES_KEY = 16;
 	public static final short SIZE_CERT_TYPE = 1;
-	public static final short SIZE_CERT_EXP = 8;
-	public static final short SIZE_CERT_DATA_CARD = (short) ((short) (SIZE_CERT_TYPE + SIZE_RSA_KEY_MOD) + SIZE_CERT_EXP);
+	public static final short SIZE_CERT_EXP_DATE = 8;
+	public static final short SIZE_CERT_DATA_CARD = (short) ((short) (SIZE_CERT_TYPE + SIZE_RSA_KEY_MOD) + SIZE_CERT_EXP_DATE);
 	public static final short SIZE_CERT_DATA_TERM = (short) (SIZE_CERT_TYPE + SIZE_RSA_KEY_MOD);
 	public static final short SIZE_CERT_CARD = (short) (SIZE_CERT_DATA_CARD + SIZE_RSA_SIG);
 	public static final short SIZE_CERT_TERM = (short) (SIZE_CERT_TYPE + SIZE_RSA_SIG);
@@ -122,6 +124,11 @@ public class SecureData {
 		return len;
 	}
 
+	boolean validateOwnCert() {
+		return caVerifier.verify(certificate, (short) 0, SIZE_CERT_DATA_CARD,
+				certificate, SIZE_CERT_DATA_CARD, SIZE_RSA_SIG);
+	}
+
 	/** Validate a terminal certificate */
 	boolean validateCert(byte[] data, short dataOfs, byte[] sig, short sigOfs) {
 		return caVerifier.verify(data, dataOfs, SIZE_CERT_DATA_TERM, sig,
@@ -138,7 +145,7 @@ public class SecureData {
 								(short) (SIZE_CERT_TYPE + SIZE_RSA_KEY_MOD),
 								newCert,
 								(short) (ofs + (short) (SIZE_CERT_TYPE + SIZE_RSA_KEY_MOD)),
-								SIZE_CERT_EXP) <= 0;
+								SIZE_CERT_EXP_DATE) <= 0;
 	}
 
 	/**
@@ -235,6 +242,10 @@ public class SecureData {
 	void setCertSig(byte[] buffer, short ofs) {
 		Util.arrayCopy(buffer, ofs, certificate, SIZE_CERT_DATA_CARD,
 				SIZE_RSA_SIG);
+	}
+
+	byte[] getCert() {
+		return certificate;
 	}
 
 }
