@@ -8,7 +8,8 @@ public class ConstantValues {
 	public int PUBMODULUS = 128; // after you strip off the first byte (which = 0)
 	public int PUBEXPONENT = 3;
 	public int PRIVMODULUS = 128; // after you strip off the first byte (which = 0)
-	public BigInteger PUBEXPONENT_BYTE = new BigInteger("65537".getBytes());
+	public byte[] pubexp = {0x01, 0x00, 0x01};
+	public BigInteger PUBEXPONENT_BYTE = new BigInteger(pubexp);
 	public int PRIVEXPONENT = 128; // after you strip off the first byte (which = 0)
 	public int EXP_LENGTH = 8;
 	public int PK_EXP_LENGTH = 170; //162+8

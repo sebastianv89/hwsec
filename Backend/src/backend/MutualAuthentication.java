@@ -101,25 +101,31 @@ public class MutualAuthentication {
 
 		//combine the decrypted package
 		byte[] scPack = serial.combineThePackage(scDataPack1, scDataPack2, scDataPack3, scDataPack4);
-		System.out.println(util.toHexString(scPack));
+		//System.out.println(util.toHexString(scPack));
 		
 		//split card certificate and the card data {N, Ktmp}Sig
 		cardCert = new byte[CV.CARDCERT_LENGTH];
-		System.arraycopy(scPack, 0, cardCert, 0, CV.CARDCERT_LENGTH);		
-		byte[] cardData = new byte[CV.CARDDATA_LENGTH];
-		System.arraycopy(scPack, CV.CARDCERT_LENGTH, cardData, 0, CV.CARDDATA_LENGTH);
+		System.arraycopy(scPack, 0, cardCert, 0, CV.CARDCERT_LENGTH);
+		//System.out.println(util.toHexString(cardCert));
+		byte[] cardData = new byte[32];
+		System.arraycopy(scPack, CV.CARDCERT_LENGTH, cardData, 0, 32);
+		//System.out.println(util.toHexString(cardData));
 		//get card public key (from cardCert)
-		byte[] certPubKey = serial.getPublicKeyFromCert(cardCert);
+		byte[] certPubKey = new byte[CV.PUBMODULUS];
+		System.arraycopy(scPack, 1, certPubKey, 0, CV.PUBMODULUS);
 		//get signature from cardData
-		byte[] cardDataSig = serial.getSigFromCert(cardData);
+		byte[] cardDataSig = new byte[CV.SIG_LENGTH];
+		System.arraycopy(scPack, 32 + CV.CARDCERT_LENGTH, cardDataSig, 0, CV.SIG_LENGTH);
+		
 		//Verify the certificate
 		if(certVerify(cardCert)){
 			//Verify the cardData {N, Ktmp} signature
 			if(sigVerif(cardData, certPubKey, cardDataSig)){
 				//TODO send session key to card
-				CT.sendToCard(null, CT.INS_AUTH_6, sessionKey);
+				CT.sendToCard(nounce, CT.INS_AUTH_6, sessionKey);
 			}else{
 				//Emptying the card certificate --> the card cert is not valid
+				//System.err.println("clearing");
 				cardCert = null;
 			}
 		}else{
@@ -139,21 +145,62 @@ public class MutualAuthentication {
 	 */
 	public boolean certVerify(byte[] cardCert){
 		boolean result = false;
-		byte[] CApubKey = readFiles("CAPublicKey");
+		byte[] CAPkBytes = readFiles("CAPublicKey");
+		X509EncodedKeySpec pubspec = new X509EncodedKeySpec(CAPkBytes);
+		KeyFactory factory;
+		RSAPublicKey CAPubKey = null;
+		try {
+			factory = KeyFactory.getInstance("RSA");
+			CAPubKey = (RSAPublicKey) factory.generatePublic(pubspec);
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		//split the certificate data and the signature 
+		
 		byte[] certData = serial.getCardCertDataFromCert(cardCert); //without signature
 		byte[] certSig = serial.getSigFromCert(cardCert); //card signature
 
-		if(sigVerif(certData, CApubKey, certSig)){
+		if(sigVerif(certData, CAPubKey, certSig)){
 			result = true;
 		}
 
 		return result;
 	}
 
+	public boolean sigVerif(byte[] data, RSAPublicKey pubKey, byte[] signature) {
+		Signature sig;
+		boolean result = false;
+		try {
+			sig = Signature.getInstance("MD5WithRSA");
+			sig.initVerify(pubKey);
+			sig.update(data);
+			result = sig.verify(signature);
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SignatureException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return result;
+	}
+	
 	public boolean sigVerif(byte[] data, byte[] pubKey, byte[] signature) {
 		// Convert bytekey (public Modulus into a RSAPublicKey
-		RSAPublicKeySpec spec = new RSAPublicKeySpec(new BigInteger(pubKey), CV.PUBEXPONENT_BYTE);
+		byte[] padded = new byte[129];
+		padded[0] = 0;
+		System.arraycopy(pubKey, 0, padded, 1, 128);
+		
+		RSAPublicKeySpec spec = new RSAPublicKeySpec(new BigInteger(padded), CV.PUBEXPONENT_BYTE);
 		RSAPublicKey pub = null;
 		try {
 			KeyFactory factory = KeyFactory.getInstance("RSA");
@@ -165,6 +212,10 @@ public class MutualAuthentication {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		System.out.println("This is the public key, gotten from the card:");
+		System.out.println(pub);
+		System.out.println(util.toHexString(padded));
 
 		Signature sig;
 		boolean result = false;

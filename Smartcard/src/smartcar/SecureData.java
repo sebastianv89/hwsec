@@ -90,13 +90,13 @@ public class SecureData {
 	 * 
 	 * @return length of encrypted data
 	 */
-	short publicEncrypt(byte[] plaintext, byte counter, byte[] ciphertext) {
+	short publicEncrypt(byte[] plaintext, byte counter, byte[] ciphertext, short ciphOfs) {
 		short inOffset = (short) (counter * SIZE_PUBENC_PLAIN);
 		short fourthSize = (SIZE_CERT_CARD + SIZE_NONCE + SIZE_AES_KEY + SIZE_RSA_SIG)
 				% SIZE_PUBENC_PLAIN;
 		short inSize = (counter < 3 ? SIZE_PUBENC_PLAIN : fourthSize);
 		return pubEncrypter.doFinal(plaintext, inOffset, inSize, ciphertext,
-				(short) 0);
+				ciphOfs);
 	}
 
 	/**

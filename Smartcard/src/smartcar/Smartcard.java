@@ -358,25 +358,25 @@ public class Smartcard extends Applet implements ISO7816 {
 		}
 
 		// send back the first encrypted blob
-		short len = sd.publicEncrypt(tmp, (byte) 0, buf);
-		apdu.setOutgoingAndSend((short) OFFSET_CDATA, len);
+		short len = sd.publicEncrypt(tmp, (byte) 0, buf, (short) 0);
+		apdu.setOutgoingAndSend((short) 0, len);
 	}
 
 	/** Protocols 6.4 and 6.5 (mutual auth), step 2 (part 2) */
 	private void authenticate3(APDU apdu, byte[] buf) {
-		short len = sd.publicEncrypt(tmp, (byte) 1, buf);
+		short len = sd.publicEncrypt(tmp, (byte) 1, buf, (short) 0);
 		apdu.setOutgoingAndSend((short) 0, len);
 	}
 
 	/** Protocols 6.4 and 6.5 (mutual auth), step 2 (part 3) */
 	private void authenticate4(APDU apdu, byte[] buf) {
-		short len = sd.publicEncrypt(tmp, (byte) 2, buf);
+		short len = sd.publicEncrypt(tmp, (byte) 2, buf, (short) 0);
 		apdu.setOutgoingAndSend((short) 0, len);
 	}
 
 	/** Protocols 6.4 and 6.5 (mutual auth), step 2 (part 4) */
 	private void authenticate5(APDU apdu, byte[] buf) {
-		short len = sd.publicEncrypt(tmp, (byte) 3, buf);
+		short len = sd.publicEncrypt(tmp, (byte) 3, buf, (short) 0);
 		apdu.setOutgoingAndSend((short) 0, len);
 	}
 

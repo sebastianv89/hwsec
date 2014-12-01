@@ -46,7 +46,6 @@ public class CertAuth {
 			// Get the private key from file.
 			readPrivateKey(CAPrivateKeyFile);
 			readPublicKey(CAPublicKeyFile);
-
 	}
 
 	public RSAPublicKey getVerificationKey() {
@@ -88,7 +87,7 @@ public class CertAuth {
 		System.arraycopy(pk, 0, byteTuple, 1, pk.length);
 		byte[] expbytes = ByteBuffer.allocate(8).putLong(exp).array(); // long -> bytes
 		
-		System.arraycopy(expbytes, 0, byteTuple, pk.length, expbytes.length);
+		System.arraycopy(expbytes, 0, byteTuple, pk.length + 1, expbytes.length);
 		
 		byte[] signature = signRaw(byteTuple); //signature = 128bytes
 		

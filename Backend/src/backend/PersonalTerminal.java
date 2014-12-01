@@ -94,7 +94,7 @@ public class PersonalTerminal {
 			byte[] exponent = bu.getBytes(signKey.getPrivateExponent());
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_SK, 0x00,
 					0x00, exponent);
-			System.out.println(capdu);
+			System.out.println(capdu + " Data: " + bu.toHexString(capdu.getData()));
 			rapdu = applet.transmit(capdu);
 			System.out.println(rapdu);
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {

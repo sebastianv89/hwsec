@@ -42,6 +42,8 @@ public class Backend {
 	public InitData registerNewCard() {
 		// generate a new (random) keypair
 		KeyPair keypair = new KeyPair();
+		//System.out.println(keypair.getPublic());
+		//System.out.println(keypair.getPrivate());
 		long exp = getExpirationDate();
 
 		// get a certificate from the CA
