@@ -77,10 +77,20 @@ public class PersonalTerminal {
 			byte[] cert) {
 		CommandAPDU capdu;
 		ResponseAPDU rapdu;
+		
+		/* debugging
+		System.err.println("Writing to card:");
+		System.err.println(signKey);
+		System.err.println(bu.toHexString(signKey.getPrivateExponent().toByteArray()));
+		System.err.println(caVerifKey);
+		System.err.println(bu.toHexString(caVerifKey.getModulus().toByteArray()));
+		System.err.println(cert);
+		System.err.println(bu.toHexString(cert));
+		*/
 
 		try {
 			// send private exponent of the smartcard signature key
-			byte[] exponent = bu.getBytes(signKey.getPrivateExponent());
+			byte[] exponent = signKey.getPrivateExponent().toByteArray();
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_SK, 0x00,
 					0x00, exponent);
 			System.out.println(capdu);
@@ -149,6 +159,7 @@ public class PersonalTerminal {
 				while (cs.isEmpty()) {
 					System.err.println("No terminals with a card found.");
 					sleep(2000);
+					cs = ct.list(CardTerminals.State.CARD_PRESENT);
 				}
 
 				while (!stopThread) {
