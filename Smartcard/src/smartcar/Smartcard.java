@@ -49,7 +49,7 @@ public class Smartcard extends Applet implements ISO7816 {
 	public static final short SIZE_RT_RENEW_CERT_1 = SecureData.SIZE_CERT_DATA_CARD;
 	public static final short SIZE_RT_RENEW_CERT_2 = SecureData.SIZE_RSA_SIG;
 	public static final short SIZE_RT_TOPUP_KM = 1; // SecureData.SIZE_AES_BLOCKSIZE;
-	public static final short SIZE_RT_REFUND_KM = 1; //SecureData.SIZE_AES_BLOCKSIZE;
+	public static final short SIZE_RT_REFUND_KM = 1; // SecureData.SIZE_AES_BLOCKSIZE;
 
 	// State for receiving multi-APDU data
 	public static final byte STATE_INIT = 0x00;
@@ -397,18 +397,18 @@ public class Smartcard extends Applet implements ISO7816 {
 	private void startVehicle(APDU apdu, byte[] buf) {
 		// read ignition message (required for authentication)
 		apdu.setIncomingAndReceive();
-		
-		/* FIXME encryption
-		short len = sd.sessionDecrypt(buf, (short) 0,
-				SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
-		*/
+
+		/*
+		 * FIXME encryption short len = sd.sessionDecrypt(buf, (short) 0,
+		 * SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
+		 */
 		short len = 1;
-		tmp[0] = buf[0];
-		
+		tmp[0] = buf[OFFSET_CDATA];
+
 		if (len != 1 || tmp[0] != MSG_IGNITION) {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}
-		
+
 		if (km.start()) {
 			setIgnited(true);
 
@@ -416,12 +416,13 @@ public class Smartcard extends Applet implements ISO7816 {
 			tmp[0] = MSG_IGNITION_OK;
 			Util.setShort(tmp, (short) 1, km.getKm());
 			len = 3;
-			
+
 			sd.sign(tmp, (short) 0, len, tmp, len);
 			len += SecureData.SIZE_RSA_SIG;
-			/* FIXME: encryption
-			len = sd.sessionEncrypt(tmp, (short) 0, len, buf, (short) 0);
-			*/
+			/*
+			 * FIXME: encryption len = sd.sessionEncrypt(tmp, (short) 0, len,
+			 * buf, (short) 0);
+			 */
 			Util.arrayCopy(tmp, (short) 0, buf, (short) 0, len);
 			apdu.setOutgoingAndSend((short) 0, len);
 		} else {
@@ -430,9 +431,10 @@ public class Smartcard extends Applet implements ISO7816 {
 			len = 1;
 			sd.sign(tmp, (short) 0, len, tmp, len);
 			len += SecureData.SIZE_RSA_SIG;
-			/* FIXME: encryption
-			len = sd.sessionEncrypt(tmp, (short) 0, len, buf, (short) 0);
-			*/
+			/*
+			 * FIXME: encryption len = sd.sessionEncrypt(tmp, (short) 0, len,
+			 * buf, (short) 0);
+			 */
 			Util.arrayCopy(tmp, (short) 0, buf, (short) 0, len);
 			apdu.setOutgoingAndSend((short) 0, len);
 		}
@@ -442,12 +444,14 @@ public class Smartcard extends Applet implements ISO7816 {
 	private void tick(APDU apdu, byte[] buf) {
 		// read tick message (required for authentication)
 		apdu.setIncomingAndReceive();
-		
-		/* FIXME: decryption
-		short len = sd.sessionDecrypt(buf, (short) 0,
-				SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
-		*/
+
+		/*
+		 * FIXME: decryption short len = sd.sessionDecrypt(buf, (short) 0,
+		 * SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
+		 */
 		short len = 1;
+		tmp[0] = buf[OFFSET_CDATA];
+
 		if (len != 1 || tmp[0] != MSG_DEDUCT_KM) {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}
@@ -459,9 +463,10 @@ public class Smartcard extends Applet implements ISO7816 {
 			len = 3;
 			sd.sign(tmp, (short) 0, len, tmp, len);
 			len += SecureData.SIZE_RSA_SIG;
-			/* FIXME encryption
-			len = sd.sessionEncrypt(tmp, (short) 0, len, buf, (short) 0);
-			*/
+			/*
+			 * FIXME encryption len = sd.sessionEncrypt(tmp, (short) 0, len,
+			 * buf, (short) 0);
+			 */
 			Util.arrayCopy(tmp, (short) 0, buf, (short) 0, len);
 			apdu.setOutgoingAndSend((short) 0, len);
 		} else {
@@ -470,9 +475,10 @@ public class Smartcard extends Applet implements ISO7816 {
 			len = 1;
 			sd.sign(tmp, (short) 0, len, tmp, len);
 			len += SecureData.SIZE_RSA_SIG;
-			/* FIXME encryption
-			len = sd.sessionEncrypt(tmp, (short) 0, len, buf, (short) 0);
-			*/
+			/*
+			 * FIXME encryption len = sd.sessionEncrypt(tmp, (short) 0, len,
+			 * buf, (short) 0);
+			 */
 			Util.arrayCopy(tmp, (short) 0, buf, (short) 0, len);
 			apdu.setOutgoingAndSend((short) 0, len);
 		}
@@ -482,12 +488,15 @@ public class Smartcard extends Applet implements ISO7816 {
 	private void stopVehicle(APDU apdu, byte[] buf) {
 		// read ignition message (required for authentication)
 		apdu.setIncomingAndReceive();
-		
-		/* FIXME: decryption
-		short len = sd.sessionDecrypt(buf, (short) 0,
-				SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
-		*/
+
+		/*
+		 * FIXME: decryption short len = sd.sessionDecrypt(buf, (short) 0,
+		 * SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
+		 */
+
 		short len = 1;
+		tmp[0] = buf[OFFSET_CDATA];
+
 		if (len != 1 || tmp[0] != MSG_STOP) {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}
@@ -543,9 +552,10 @@ public class Smartcard extends Applet implements ISO7816 {
 		short len = 2;
 		sd.sign(tmp, (short) 0, len, tmp, len);
 		len += SecureData.SIZE_RSA_SIG;
-		/* FIXME: encryption
-		len = sd.sessionEncrypt(tmp, (short) 0, len, buf, (short) 0);
-		*/
+		/*
+		 * FIXME: encryption len = sd.sessionEncrypt(tmp, (short) 0, len, buf,
+		 * (short) 0);
+		 */
 		Util.arrayCopy(tmp, (short) 0, buf, (short) 0, len);
 		apdu.setOutgoingAndSend((short) 0, len);
 	}
@@ -554,11 +564,13 @@ public class Smartcard extends Applet implements ISO7816 {
 	private void topup(APDU apdu, byte[] buf) {
 		// step 7
 		apdu.setIncomingAndReceive();
-		/* FIXME: decryption
-		short len = sd.sessionDecrypt(buf, (short) 0,
-				SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
-		*/
+		/*
+		 * FIXME: decryption
+		 * short len = sd.sessionDecrypt(buf, (short) 0, SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
+		 */
 		short len = 3;
+		Util.arrayCopy(buf, OFFSET_CDATA, tmp, (short) 0, len);
+
 		if (len != 3 || tmp[0] != MSG_TOPUP) {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}
@@ -573,9 +585,10 @@ public class Smartcard extends Applet implements ISO7816 {
 		len = 3;
 		sd.sign(tmp, (short) 0, len, tmp, len);
 		len += SecureData.SIZE_RSA_SIG;
-		/* FIXME: encryption
-		len = sd.sessionEncrypt(tmp, (short) 0, len, buf, (short) 0);
-		*/
+		/*
+		 * FIXME: encryption len = sd.sessionEncrypt(tmp, (short) 0, len, buf,
+		 * (short) 0);
+		 */
 		Util.arrayCopy(tmp, (short) 0, buf, (short) 0, len);
 		apdu.setOutgoingAndSend((short) 0, len);
 
@@ -587,12 +600,14 @@ public class Smartcard extends Applet implements ISO7816 {
 	private void refund(APDU apdu, byte[] buf) {
 		// step 7
 		apdu.setIncomingAndReceive();
-		/* FIXME: decryption
-		short len = sd.sessionDecrypt(buf, (short) 0,
-				SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
-		*/
-		short len = 1;
+		/*
+		 * FIXME: decryption short len = sd.sessionDecrypt(buf, (short) 0,
+		 * SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
+		 */
 		
+		short len = 1;
+		tmp[0] = buf[OFFSET_CDATA]; 
+
 		if (len != 1 || tmp[0] != MSG_REFUND) {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}
@@ -605,9 +620,10 @@ public class Smartcard extends Applet implements ISO7816 {
 		tmp[0] = MSG_REFUND_OK;
 		sd.sign(tmp, (short) 0, len, tmp, len);
 		len += SecureData.SIZE_RSA_SIG;
-		/* FIXME: encryption
-		len = sd.sessionEncrypt(tmp, (short) 0, len, buf, (short) 0);
-		*/
+		/*
+		 * FIXME: encryption len = sd.sessionEncrypt(tmp, (short) 0, len, buf,
+		 * (short) 0);
+		 */
 		Util.arrayCopy(tmp, (short) 0, buf, (short) 0, len);
 		apdu.setOutgoingAndSend((short) 0, len);
 	}
