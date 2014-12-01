@@ -43,7 +43,7 @@ public class Database {
 	    
 	    try {
 			stmt = conn.createStatement();
-			rs = stmt.executeQuery("SELECT card.id as id, card.customerID as custID, "
+			rs = stmt.executeQuery("SELECT card.publicKey as id, card.customerId as custID, "
 					+ "customer.name as custName, card.totalKm as km, card.expiration as exp, "
 					+ "card.revocation as revoke, card.publicKey as cardPK "
 					+ "FROM card, customer "
@@ -69,7 +69,7 @@ public class Database {
 	      String name = "";
 		try {
 			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery( "SELECT name FROM card WHERE customerId = \"" + customerId + "\");" );
+			ResultSet rs = stmt.executeQuery( "SELECT name FROM customer WHERE id = \"" + customerId + "\"" );
 		      while ( rs.next() ) {
 		         name = rs.getString("name");
 		      }
@@ -89,7 +89,7 @@ public class Database {
 
 		    // Check if someone with this name already exists
 		    stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery( "SELECT id FROM card WHERE name = \"" + customerName + "\");" );
+			ResultSet rs = stmt.executeQuery( "SELECT id FROM customer WHERE name = \"" + customerName + "\"" );
 		      while ( rs.next() ) {
 		         customerId = rs.getInt("id");
 		      }
@@ -98,13 +98,14 @@ public class Database {
 		      
 		      if (customerId == -1) {
 				stmt = conn.createStatement();
-				stmt.executeUpdate( "INSERT INTO customer (name) VALUES (\"" + customerName + "\");"  );
+				stmt.executeUpdate( "INSERT INTO customer (name) VALUES (\"" + customerName + "\")"  );
+//				conn.commit();
 				stmt.close();
-				conn.commit();
+				
 				
 				// Now get the id of the newly inserted customer
 				stmt = conn.createStatement();
-				ResultSet rs2 = stmt.executeQuery( "SELECT id FROM card WHERE name = \"" + customerName + "\");" );
+				ResultSet rs2 = stmt.executeQuery( "SELECT id FROM customer WHERE name = \"" + customerName + "\"" );
 			      while ( rs2.next() ) {
 			         customerId = rs2.getInt("id");
 			      }
@@ -132,10 +133,9 @@ public class Database {
 		try {
 			stmt = conn.createStatement();
 			stmt.executeUpdate( "INSERT INTO card (customerId, totalKm, expiration, revocation, publicKey) "
-					+ "VALUES (\"" + customerId + "\", \"0\", \"" + expiration + "\", \"" +
-					false + "\", \"" + strPublicKey + "\");"  );
+					+ "VALUES (\"" + customerId + "\", \"0\", \"" + expiration + "\", \"0\", \"" + strPublicKey + "\")"  );
 		    stmt.close();
-		    conn.commit();
+//		    conn.commit();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -150,9 +150,9 @@ public class Database {
 	    Statement stmt;
 		try {
 			stmt = conn.createStatement();
-			stmt.executeUpdate( "UPDATE card SET revoked = \"" + true + "\" WHERE publicKey = \"" + publicKey + "\";"  );
+			stmt.executeUpdate( "UPDATE card SET revoked = \"1\" WHERE publicKey = \"" + publicKey + "\""  );
 		    stmt.close();
-		    conn.commit();
+//		    conn.commit();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -165,26 +165,13 @@ public class Database {
 	 * @param publicKey		Used for identifying the correct card
 	 * @return the status of the revoked flag (true = revoked, false = not revoked)
 	 */
-	//TODO: NOT DONE YET!!!!
 	public boolean isRevoked(String strPublicKey) {
 	    Statement stmt;
 	    String rev = "";
-//	    RSAPublicKey pubKey = null;
-//	    try {
-//	    	X509EncodedKeySpec pubspec = new X509EncodedKeySpec(bPublicKey);
-//			KeyFactory factory = KeyFactory.getInstance("RSA");
-//			pubKey = (RSAPublicKey) factory.generatePublic(pubspec);
-//	    } catch (InvalidKeySpecException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (NoSuchAlgorithmException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 	    
 		try {
 			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery( "SELECT revoked FROM card WHERE publicKey = \"" + strPublicKey + "\");" );
+			ResultSet rs = stmt.executeQuery( "SELECT revoked FROM card WHERE publicKey = \"" + strPublicKey + "\")" );
 		      while ( rs.next() ) {
 		         rev = rs.getString("revoked");
 		      }
@@ -194,8 +181,8 @@ public class Database {
 			e.printStackTrace();
 		}
 		
-		if (rev.equalsIgnoreCase("true") || rev.equalsIgnoreCase("false")) {
-		    return Boolean.valueOf(rev);
+		if (rev.equalsIgnoreCase("1") || rev.equalsIgnoreCase("0")) {
+		    return rev.equals("1"); //Will return true if it equals 1 and false if it equals 0
 		} else {
 		    return false; //TODO: We return false if the card is not found???
 		}
@@ -213,16 +200,6 @@ public class Database {
 		return 0;
 	}
 
-	/**
-	 * Add a customer to the database
-	 * 
-	 * @return customer id
-	 */
-	public int addCustomer(String name) {
-		// TODO: implement
-		// customerID = sql("INSERT INTO customers ('name') VALUES $name");
-		return 0;
-	}
 	
 	/**
 	 * @Fitria
@@ -233,12 +210,12 @@ public class Database {
 	 * @param id : id of the rows that will be updated
 	 * @return states: equal to true if succeed, false otherwise 
 	 */
-	public boolean updateKilometersExpiration(int kmNew, long expirationNew, int id){
+	public boolean updateKilometersExpiration(int kmNew, long expirationNew, String strPublicKey){
 		boolean states = false;
 		Statement stmt;
 		try {
 			stmt = conn.createStatement();
-			stmt.executeUpdate("update card set totalKM = "+ kmNew +", expiration = "+ expirationNew +" where id = " + id);
+			stmt.executeUpdate("update card set totalKM = "+ kmNew +", expiration = "+ expirationNew +" where publicKey = " + strPublicKey);
 		    stmt.close();
 		    states = true;
 		} catch (SQLException e) {
