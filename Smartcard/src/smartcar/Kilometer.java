@@ -60,6 +60,11 @@ public class Kilometer {
 		return true;
 	}
 
+	/**
+	 * Add one km
+	 * 
+	 * @return false if the counter will overflow
+	 */
 	boolean stop() {
 		if (value[i] == MAX_KM) {
 			return false;
@@ -68,15 +73,15 @@ public class Kilometer {
 		return true;
 	}
 
-	boolean topupAllowed(short km) {
-		return km >= 0 && getKm() < (short) (MAX_KM - km);
+	boolean topupAllowed(short amount) {
+		return amount >= 0 && amount < MAX_KM;
 	}
 
-	void topup(short km) {
-		if (!topupAllowed(km)) {
+	void topup(short amount) {
+		if (!topupAllowed(amount)) {
 			return;
 		}
-		setKm(km);
+		setKm(amount);
 	}
 
 	void reset() {

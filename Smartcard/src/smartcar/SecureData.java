@@ -20,6 +20,7 @@ public class SecureData {
 	public static final short SIZE_RSA_KEY_MOD = 128;
 	public static final short SIZE_RSA_KEY_PUB_EXP = 3;
 	public static final short SIZE_RSA_SIG = 128;
+	public static final short SIZE_RSA_ENC = 128;
 	public static final short SIZE_NONCE = 16;
 	public static final short SIZE_AES_KEY = 16;
 	public static final short SIZE_CERT_TYPE = 1;
@@ -125,6 +126,19 @@ public class SecureData {
 	boolean validateCert(byte[] data, short dataOfs, byte[] sig, short sigOfs) {
 		return caVerifier.verify(data, dataOfs, SIZE_CERT_DATA_TERM, sig,
 				sigOfs, SIZE_RSA_SIG);
+	}
+
+	/** Check a certificate for update */
+	boolean checkCertUpdate(byte[] newCert, short ofs) {
+		return Util.arrayCompare(certificate, (short) 0, newCert, ofs,
+				(short) (SIZE_CERT_TYPE + SIZE_RSA_KEY_MOD)) == 0
+				&& Util
+						.arrayCompare(
+								certificate,
+								(short) (SIZE_CERT_TYPE + SIZE_RSA_KEY_MOD),
+								newCert,
+								(short) (ofs + (short) (SIZE_CERT_TYPE + SIZE_RSA_KEY_MOD)),
+								SIZE_CERT_EXP) <= 0;
 	}
 
 	/**
