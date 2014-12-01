@@ -11,6 +11,7 @@ public class Card {
 	String cardPublicKey;
 	
 	byte[] cardModulus;
+	byte[] sessionKey;
 	
 	
 	public Card(){
@@ -42,6 +43,13 @@ public class Card {
 		this.cardModulus = cardByteModulus;
 	}
 	
+	public void setSessionKey(byte[] sessionkey){
+		this.sessionKey = sessionkey;
+	}
+	
+	public byte[] getSessionKey(){
+		return this.sessionKey;
+	}
 	
 	public int getID(){
 		return this.id;
