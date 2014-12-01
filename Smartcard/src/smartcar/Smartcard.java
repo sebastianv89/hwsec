@@ -42,13 +42,14 @@ public class Smartcard extends Applet implements ISO7816 {
 	public static final short SIZE_AUTH_2 = SecureData.SIZE_RSA_SIG
 			+ SecureData.SIZE_NONCE;
 	public static final short SIZE_AUTH_6 = SecureData.SIZE_AES_BLOCKSIZE;
-	public static final short SIZE_VT_START = SecureData.SIZE_AES_BLOCKSIZE;
-	public static final short SIZE_VT_TICK_KM = SecureData.SIZE_AES_BLOCKSIZE;
-	public static final short SIZE_VT_STOP = SecureData.SIZE_AES_BLOCKSIZE;
+	// FIXME: encryption
+	public static final short SIZE_VT_START = 1; // SecureData.SIZE_AES_BLOCKSIZE;
+	public static final short SIZE_VT_TICK_KM = 1; // SecureData.SIZE_AES_BLOCKSIZE;
+	public static final short SIZE_VT_STOP = 1; // SecureData.SIZE_AES_BLOCKSIZE;
 	public static final short SIZE_RT_RENEW_CERT_1 = SecureData.SIZE_CERT_DATA_CARD;
 	public static final short SIZE_RT_RENEW_CERT_2 = SecureData.SIZE_RSA_SIG;
-	public static final short SIZE_RT_TOPUP_KM = SecureData.SIZE_AES_BLOCKSIZE;
-	public static final short SIZE_RT_REFUND_KM = SecureData.SIZE_AES_BLOCKSIZE;
+	public static final short SIZE_RT_TOPUP_KM = 1; // SecureData.SIZE_AES_BLOCKSIZE;
+	public static final short SIZE_RT_REFUND_KM = 1; //SecureData.SIZE_AES_BLOCKSIZE;
 
 	// State for receiving multi-APDU data
 	public static final byte STATE_INIT = 0x00;
