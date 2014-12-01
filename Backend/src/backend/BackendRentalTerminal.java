@@ -92,7 +92,7 @@ public class BackendRentalTerminal {
 	 * without the ticking
 	 */
 	
-	public Card AuthenticateCard(){
+	public Card AuthenticateCard(short uKm){
 		//1. read from the card and do mutual authentication
 		byte[] cert = MA.TerminalMutualAuth(GetRTCert(), GetRTPrivateKey());
 		byte[] newCert = null;
@@ -103,7 +103,6 @@ public class BackendRentalTerminal {
 			//split the certificate into two packages
 			byte[] pack1 = new byte[CV.PUBMODULUS + 1 + CV.EXP_LENGTH];  //1 + 128 + 8
 			System.arraycopy(newCert, 0, pack1, 0, pack1.length); 
-			
 			System.out.println(byteUtil.toHexString(pack1));
 			byte[] pack2 = new byte[CV.SIG_LENGTH]; //SIGNATURE 128
 			System.arraycopy(newCert, CV.PUBMODULUS + 1 + CV.EXP_LENGTH, pack2, 0, CV.SIG_LENGTH);
@@ -113,12 +112,24 @@ public class BackendRentalTerminal {
 			byte[] scPack1 = CT.sendToCard(pack1, CT.INS_RT_RENEW_CERT_1);
 			byte[] scPack2 = CT.sendToCard(pack2, CT.INS_RT_RENEW_CERT_2); //here I receive the km signed and encrypted
 			
-			System.out.println(byteUtil.toHexString(scPack2));
-			//decrypt scPack2
-			//short km = 0;
-			//card.setKilometers(km);
+			byte[] km = new byte[2];
+			System.out.println("p2: "+ byteUtil.toHexString(scPack2));
+			short skm = byteUtil.bytesToShort(km);
+			card.setKilometers(skm);
+			
 			//extract expiration date from the new certificate and convert it to Long 
 			long expNew  = byteUtil.bytesToLong(serial.getExpFromCert(newCert));
+			card.setExpiration(expNew);
+			
+			
+			byte[] data = new byte[3];
+			data[0] = CT.MSG_TOPUP;
+			byte[] ukmB = byteUtil.shortToBytes(uKm);
+			System.arraycopy(ukmB, 0, data, 1, 2);
+			System.out.print("data: "+ byteUtil.toHexString(data));
+			byte[] scTopUp = CT.sendToCard(data, CT.INS_RT_TOPUP_KM);
+			System.out.print(byteUtil.toHexString(scTopUp));
+			
 			
 		} catch (RevokedException e) {
 			// TODO Auto-generated catch block
@@ -130,7 +141,8 @@ public class BackendRentalTerminal {
 	public Card TopUpCard(short cardKm){
 		
 		// Get card from database  
-		Card card = AuthenticateCard();//getCardDB(cert);
+		Card card = AuthenticateCard(cardKm);
+		
 		
 	//	try {
 			

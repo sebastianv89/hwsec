@@ -29,15 +29,16 @@ public class CardTerminalCommunication {
 		public static final byte INS_AUTH_5 = 0x28;
 		public static final byte INS_AUTH_6 = 0x2A;
 		
-		//Rental Terminal APDU parameters
-		public static final byte INS_RT_REG = 0x50;
-		public static final byte INS_RT_TOPUP = 0x52;
-		public static final byte INS_RT_REFUND = 0x54;
-		
+		//Rental Terminal APDU parameters		
 		public static final byte INS_RT_RENEW_CERT_1 = 0x50;
 		public static final byte INS_RT_RENEW_CERT_2 = 0x52;
 		public static final byte INS_RT_TOPUP_KM = 0x54;
 		public static final byte INS_RT_REFUND_KM = 0x56;
+		
+		public static final byte MSG_TOPUP = 0x4c;
+		public static final byte MSG_TOPUP_OK = 0x4d;
+		public static final byte MSG_REFUND = 0x4e;
+		public static final byte MSG_REFUND_OK = 0x4f;
 		
 
 		// Response status words (encoded as integers)
