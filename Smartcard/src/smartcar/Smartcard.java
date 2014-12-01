@@ -338,7 +338,7 @@ public class Smartcard extends Applet implements ISO7816 {
 				SecureData.SIZE_CERT_DATA_TERM, SecureData.SIZE_RSA_SIG);
 
 		// validate the terminal certificate
-		if (!sd.validateCert(tmp, (short) 0, tmp,
+		if (!sd.validateTermCert(tmp, (short) 0, tmp,
 				SecureData.SIZE_CERT_DATA_TERM)) {
 			ISOException.throwIt(SW_WRONG_DATA);
 		}
@@ -541,7 +541,7 @@ public class Smartcard extends Applet implements ISO7816 {
 				SecureData.SIZE_RSA_SIG);
 
 		// check the certificate by validating its correctness
-		if (!sd.validateCert(tmp, (short) 0, tmp,
+		if (!sd.validateCardCert(tmp, (short) 0, tmp,
 				SecureData.SIZE_CERT_DATA_CARD)) {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}

@@ -87,7 +87,8 @@ public class SecureData {
 	 * 
 	 * @return length of encrypted data
 	 */
-	short publicEncrypt(byte[] plaintext, byte counter, byte[] ciphertext, short ciphOfs) {
+	short publicEncrypt(byte[] plaintext, byte counter, byte[] ciphertext,
+			short ciphOfs) {
 		short inOffset = (short) (counter * SIZE_PUBENC_PLAIN);
 		short fourthSize = (SIZE_CERT_CARD + SIZE_NONCE + SIZE_AES_KEY + SIZE_RSA_SIG)
 				% SIZE_PUBENC_PLAIN;
@@ -128,9 +129,17 @@ public class SecureData {
 	}
 
 	/** Validate a terminal certificate */
-	boolean validateCert(byte[] data, short dataOfs, byte[] sig, short sigOfs) {
+	boolean validateTermCert(byte[] data, short dataOfs, byte[] sig,
+			short sigOfs) {
 		return caVerifier.verify(data, dataOfs, SIZE_CERT_DATA_TERM, sig,
 				sigOfs, SIZE_RSA_SIG);
+	}
+
+	/** Validate a card certificate */
+	boolean validateCardCert(byte[] data, short dataOfs, byte[] sig,
+			short sigOfs) {
+		return caVerifier.verify(data, dataOfs, SIZE_CERT_DATA_CARD, sig, sigOfs,
+				SIZE_RSA_SIG);
 	}
 
 	/** Check a certificate for update */
