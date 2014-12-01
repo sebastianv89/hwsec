@@ -2,6 +2,7 @@ package smartcar;
 
 import javacard.framework.JCSystem;
 import javacard.framework.Util;
+import javacard.security.AESKey;
 import javacard.security.KeyBuilder;
 import javacard.security.RSAPrivateKey;
 import javacard.security.RSAPublicKey;
@@ -22,6 +23,7 @@ public class SecureData {
 	public static final short SIZE_RSA_KEY_PUB_EXP = 3;
 	public static final short SIZE_RSA_SIG = 128;
 	public static final short SIZE_NONCE = 16;
+	public static final short SIZE_AES_KEY = 16;
 	public static final short SIZE_CERT_TYPE = 1;
 	public static final short SIZE_CERT_EXP = 8;
 	public static final short SIZE_CERT_DATA_CARD = (short) ((short) (SIZE_CERT_TYPE + SIZE_RSA_KEY_MOD) + SIZE_CERT_EXP);
@@ -30,29 +32,33 @@ public class SecureData {
 	public static final short SIZE_CERT_TERM = (short) (SIZE_CERT_TYPE + SIZE_RSA_SIG);
 	public static final short SIZE_PUBENC_PLAIN = (short) (SIZE_RSA_KEY_MOD - 11);
 	public static final short SIZE_PUBENC_CIPH = 128;
+	public static final short SIZE_AES_BLOCKSIZE = 16;
 
 	private static final byte[] RSA_PUB_EXP = { 0x01, 0x00, 0x01 };
 
 	// permanent crypto objects
 	private RSAPrivateKey signatureKey; // TODO: replace completely with signer
-	private RSAPublicKey caVerificationKey; // TODO: replace completely with
-	// caVerifier
+	private RSAPublicKey caVerificationKey; // TODO: replace with caVerifier
+	private AESKey sessionKey;
 	private byte[] certificate; // raw data
-	private RandomData rng;
-
-	private Signature signer;
-	private Signature caVerifier;
-	private Cipher termEncrypter;
 
 	// transient crypto objects
-	private RSAPublicKey[] termEncryptKey;
+	private Object[] pubEncKey;
+
+	// crypto workers
+	private Signature signer;
+	private Signature caVerifier;
+	private Cipher pubEncrypter;
+	private Cipher secretEncrypter;
+	private Cipher secretDecrypter;
+	private RandomData rng;
 
 	/** Constructor, allocates data, initializes crypto */
 	SecureData() {
 		// allocate data
 		certificate = new byte[SIZE_CERT_CARD];
-		termEncryptKey = (RSAPublicKey[]) JCSystem.makeTransientObjectArray(
-				(short) 1, JCSystem.CLEAR_ON_DESELECT);
+		pubEncKey = JCSystem.makeTransientObjectArray((short) 1,
+				JCSystem.CLEAR_ON_DESELECT);
 
 		// initialize crypto
 		signatureKey = (RSAPrivateKey) KeyBuilder.buildKey(
@@ -62,23 +68,33 @@ public class SecureData {
 		// set the constant public exponent for the CAKey
 		caVerificationKey.setExponent(RSA_PUB_EXP, (short) 0,
 				SIZE_RSA_KEY_PUB_EXP);
+		sessionKey = (AESKey) KeyBuilder.buildKey(
+				KeyBuilder.TYPE_AES_TRANSIENT_DESELECT,
+				KeyBuilder.LENGTH_AES_128, false);
 
 		// initialize "the workers"
 		caVerifier = Signature.getInstance(Signature.ALG_RSA_MD5_PKCS1, false);
 		signer = Signature.getInstance(Signature.ALG_RSA_MD5_PKCS1, false);
-		termEncrypter = Cipher.getInstance(Cipher.ALG_RSA_PKCS1, false);
+		pubEncrypter = Cipher.getInstance(Cipher.ALG_RSA_PKCS1, false);
+		secretEncrypter = Cipher.getInstance(
+				Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
+		secretDecrypter = Cipher.getInstance(
+				Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
 		rng = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
 	}
 
+	/** Public key encryption */
 	void publicEncrypt(byte[] plaintext, byte counter, byte[] ciphertext) {
 		short inOffset = (short) (counter * SIZE_PUBENC_PLAIN);
-		short inSize = (counter == 4 ? 1024 : SIZE_PUBENC_PLAIN); // FIXME:
-																	// length
-		termEncrypter.doFinal(plaintext, inOffset, inSize, ciphertext,
-				(short) 0);
+		short inSize = SIZE_PUBENC_PLAIN; // FIXME: size 4th msg
+		pubEncrypter
+				.doFinal(plaintext, inOffset, inSize, ciphertext, (short) 0);
 	}
 
-	/** Create the response for mutual authentication in the tmp buffer */
+	/**
+	 * Create the response for mutual authentication in the tmp buffer, This
+	 * method also sets the temporary key
+	 */
 	void createAuthResponse(byte[] buffer) {
 		// place the certificate
 		Util.arrayCopy(certificate, (short) 0, buffer, (short) 0,
@@ -87,9 +103,12 @@ public class SecureData {
 		// generate temporary key
 		rng.generateData(buffer, (short) (SIZE_CERT_CARD + SIZE_NONCE),
 				SIZE_NONCE);
+		setTmpKey(buffer, (short) (SIZE_CERT_CARD + SIZE_NONCE));
+
 		// sign nonce + tmpkey
-		signer.sign(buffer, SIZE_CERT_CARD, (short) (2 * SIZE_NONCE), buffer,
-				(short) (SIZE_CERT_CARD + (short) (2 * SIZE_NONCE)));
+		signer.sign(buffer, SIZE_CERT_CARD,
+				(short) (SIZE_NONCE + SIZE_AES_KEY), buffer,
+				(short) (SIZE_CERT_CARD + (short) (SIZE_NONCE + SIZE_AES_KEY)));
 	}
 
 	/** Validate a terminal certificate */
@@ -98,18 +117,56 @@ public class SecureData {
 				sigOfs, SIZE_RSA_SIG);
 	}
 
+	/** Sign a message */
+	void sign(byte[] data, short dataOfs, short dataLen, byte[] sig,
+			short sigOfs) {
+		signer.sign(data, dataOfs, dataLen, sig, sigOfs);
+	}
+
+	/** Encrypt with the session key */
+	void sessionEncrypt(byte[] plain, short plainOfs, short plainLen,
+			byte[] cipher, short cipherOfs) {
+		secretEncrypter.doFinal(plain, plainOfs, plainLen, cipher, cipherOfs);
+	}
+
+	/** Decrypt with the session key */
+	void sessionDecrypt(byte[] cipher, short cipherOfs, short cipherLen,
+			byte[] plain, short plainOfs) {
+		secretDecrypter.doFinal(cipher, cipherOfs, cipherLen, plain, plainOfs);
+	}
+
 	/** Initialize the workers after personalization */
 	void init() {
 		signer.init(signatureKey, Signature.MODE_SIGN);
 		caVerifier.init(caVerificationKey, Signature.MODE_VERIFY);
 	}
 
+	/** Set the (symmetric) key for encryption and decryption */
+	void setSecretKey(byte[] buffer, short offset) {
+		sessionKey.setKey(buffer, offset);
+		secretEncrypter.init(sessionKey, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD);
+		secretDecrypter.init(sessionKey, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD);
+	}
+	
+	/** Destroy the session key */
+	void destroySessionKey() {
+		sessionKey.clearKey();
+	}
+
+	/** Set the (symmetric) key for decryption */
+	void setTmpKey(byte[] buffer, short offset) {
+		sessionKey.setKey(buffer, offset);
+		secretDecrypter.init(sessionKey, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD);
+	}
+
 	/** Set the (public) key modulus (N) for the encryption key */
-	void setTermEncryptKeyMod(byte[] buffer, short offset) {
-		termEncryptKey[0].setModulus(buffer, offset, SIZE_RSA_KEY_MOD);
-		termEncryptKey[0].setExponent(RSA_PUB_EXP, (short) 0,
-				SIZE_RSA_KEY_PUB_EXP);
-		termEncrypter.init(termEncryptKey[0], Cipher.MODE_ENCRYPT);
+	void setPubEncryptKeyMod(byte[] buffer, short offset) {
+		RSAPublicKey encKey = (RSAPublicKey) (pubEncKey[0]);
+		encKey = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC,
+				KeyBuilder.LENGTH_RSA_1024, false);
+		encKey.setModulus(buffer, offset, SIZE_RSA_KEY_MOD);
+		encKey.setExponent(RSA_PUB_EXP, (short) 0, SIZE_RSA_KEY_PUB_EXP);
+		pubEncrypter.init(encKey, Cipher.MODE_ENCRYPT);
 	}
 
 	/** Set the (private) key exponent (d) for the signature key */
