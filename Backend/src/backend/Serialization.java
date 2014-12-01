@@ -133,7 +133,7 @@ public class Serialization {
 	//without the signature
 	public byte[] getCardCertDataFromCert(byte[] cert){
 		byte[] certData = new byte[CV.CARDCERTDATA_LENGTH];
-		System.arraycopy(cert, 1, certData, 0, CV.CARDCERTDATA_LENGTH);
+		System.arraycopy(cert, 0, certData, 0, CV.CARDCERTDATA_LENGTH);
 		return certData;		
 	}
 	//get signature from certificate
