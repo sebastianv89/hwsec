@@ -91,7 +91,7 @@ public class PersonalTerminal {
 
 		try {
 			// send private exponent of the smartcard signature key
-			byte[] exponent = signKey.getPrivateExponent().toByteArray();
+			byte[] exponent = bu.getBytes(signKey.getPrivateExponent());
 			capdu = new CommandAPDU(CLA_CRYPTO, INS_PT_PERSONALIZE_SK, 0x00,
 					0x00, exponent);
 			System.out.println(capdu);

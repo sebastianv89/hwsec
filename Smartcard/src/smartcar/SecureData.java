@@ -5,6 +5,7 @@ import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
 import javacard.framework.Util;
 import javacard.security.AESKey;
+import javacard.security.CryptoException;
 import javacard.security.KeyBuilder;
 import javacard.security.RSAPrivateKey;
 import javacard.security.RSAPublicKey;
@@ -93,7 +94,7 @@ public class SecureData {
 		short inOffset = (short) (counter * SIZE_PUBENC_PLAIN);
 		short fourthSize = (SIZE_CERT_CARD + SIZE_NONCE + SIZE_AES_KEY + SIZE_RSA_SIG)
 				% SIZE_PUBENC_PLAIN;
-		short inSize = (counter < 4 ? SIZE_PUBENC_PLAIN : fourthSize);
+		short inSize = (counter < 3 ? SIZE_PUBENC_PLAIN : fourthSize);
 		return pubEncrypter.doFinal(plaintext, inOffset, inSize, ciphertext,
 				(short) 0);
 	}
@@ -112,7 +113,7 @@ public class SecureData {
 		len += SIZE_NONCE;
 
 		// generate temporary key
-		rng.generateData(buffer, len, SIZE_NONCE);
+		rng.generateData(buffer, len, SIZE_AES_KEY);
 		setTmpKey(buffer, len);
 
 		len += SIZE_AES_KEY;
@@ -173,16 +174,17 @@ public class SecureData {
 	}
 
 	/** Initialize the workers after personalization */
-	void init() {
+	boolean init() {
 		signer.init(signatureKey, Signature.MODE_SIGN);
 		caVerifier.init(caVerificationKey, Signature.MODE_VERIFY);
+		return validateOwnCert();
 	}
 
 	/** Set the (symmetric) key for encryption and decryption */
 	void setSessionKey(byte[] buffer, short offset) {
 		sessionKey.setKey(buffer, offset);
-		secretEncrypter.init(sessionKey, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD);
-		secretDecrypter.init(sessionKey, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD);
+		secretEncrypter.init(sessionKey, Cipher.MODE_ENCRYPT);
+		secretDecrypter.init(sessionKey, Cipher.MODE_DECRYPT);
 	}
 
 	/** @return whether the session key is initialized */
@@ -198,7 +200,7 @@ public class SecureData {
 	/** Set the (symmetric) key for decryption */
 	void setTmpKey(byte[] buffer, short offset) {
 		sessionKey.setKey(buffer, offset);
-		secretDecrypter.init(sessionKey, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD);
+		secretDecrypter.init(sessionKey, Cipher.MODE_DECRYPT);
 	}
 
 	/** Set the (public) key modulus (N) for the encryption key */
