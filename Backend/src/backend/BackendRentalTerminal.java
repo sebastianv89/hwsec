@@ -112,7 +112,7 @@ public class BackendRentalTerminal {
 			db.updateKilometersExpiration(card.getKilometers()+ cardKm, expNew, card.getID());
 				
 			//TODO update to the smartcard 
-			card.setKilometers(km + cardKm);
+			card.setKilometers((short) (km + cardKm));
 			
 			
 		} catch (RevokedException e) {
@@ -129,7 +129,7 @@ public class BackendRentalTerminal {
 		byte[] cert = MA.TerminalMutualAuth(GetRTCert(), GetRTPrivateKey());
 		
 		Card card = getCardDB(cert); //2. get card data from database
-		card.setKilometers(0); 		//3. do the refund
+		card.setKilometers((short)0); 		//3. do the refund
 		db.updateKilometersExpiration(0, card.getExpDate(), card.getID());  /*4. update to database  */
 				
 		//TODO update to Card
@@ -149,7 +149,7 @@ public class BackendRentalTerminal {
 		try {
 			if(rs.next()){
 				card = new Card(rs.getInt("id"), rs.getInt("custID"), rs.getString("custName"), 
-						rs.getInt("km"), rs.getLong("exp") , rs.getInt("revoke"), rs.getString("cardPK"));
+						 rs.getShort("km"), rs.getLong("exp") , rs.getInt("revoke"), rs.getString("cardPK"));
 			}else{
 				System.out.println("That card has not been issued");
 				card = null;
