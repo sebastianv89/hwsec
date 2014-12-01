@@ -128,6 +128,20 @@ public class Serialization {
 		System.arraycopy(cert, 1, pubKey, 0, CV.RSAPUBLICKEYLENGTH);
 		return pubKey;		
 	}
+	
+	//get data (type, pubkey, expiration) from certificate 
+	//without the signature
+	public byte[] getCardCertDataFromCert(byte[] cert){
+		byte[] certData = new byte[CV.CARDCERTDATA_LENGTH];
+		System.arraycopy(cert, 1, certData, 0, CV.CARDCERTDATA_LENGTH);
+		return certData;		
+	}
+	//get signature from certificate
+	public byte[] getSigFromCert(byte[] cert){
+		byte[] certSig = new byte[CV.SIG_LENGTH];
+		System.arraycopy(cert, cert.length-CV.SIG_LENGTH, certSig, 0, CV.SIG_LENGTH);
+		return certSig;		
+	}
 
 
 }

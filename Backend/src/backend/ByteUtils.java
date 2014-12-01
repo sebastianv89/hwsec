@@ -28,11 +28,16 @@ public class ByteUtils {
 	}
 	
 	public short bytesToShort(byte[] bytes) {
-		ByteBuffer bb = ByteBuffer.allocate(2);
-		bb.put(bytes[0]);
-		bb.put(bytes[1]);
-		short shortVal = bb.getShort(0);
-		return shortVal;
+		ByteBuffer bb = ByteBuffer.allocate(Short.SIZE);
+		bb.put(bytes);
+		bb.flip();
+		return bb.getShort();
+	}
+	
+	public byte[] shortToBytes(short x) {
+	    ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE);
+	    buffer.putShort(x);
+	    return buffer.array();
 	}
 	
 	
