@@ -20,6 +20,7 @@ public class MutualAuthentication {
 	ByteUtils util = new ByteUtils();
 	ConstantValues CV = new ConstantValues();
 	Serialization serial = new Serialization();
+	CardTerminalCommunication CT = new CardTerminalCommunication();
 	
 	int NONCE_LENGTH = 16;
 	
@@ -34,18 +35,22 @@ public class MutualAuthentication {
 	 * 3. Combine those two and split them into two package; (OK)
 	 * 4. Send those two package to card --
 	 * 5. Received 4 packages from smartcard --
-	 * (ask the card for the every next package; mentioned the package number in P2) --
+	 * (ask the card for the every next package; differentiate the package number in INS) --
 	 * 6. Read RT Priv Key from file (OK)
 	 * 7. Decrypt every packages (OK)
 	 * 8. Combine the decrypted packages (OK)
 	 * 9. Split the smartcard's certificate (certS) and Data (N, Ktmp) from the decrypted packages (OK)
 	 * 10.Verify the Certificate (with the CAPublicKey - from file - and check the revocation status) (OK)
 	 * 11. Verify the card Signature (data, cardPubKey, dataSignature) (Max help. OK)
-	 * 12. Send the session key to card (later) --
+	 * 12. Send the session key to card  --
 	 */
 	
-	public boolean TerminalMutualAuth(byte[] cert, RSAPrivateKey privKey){
-		boolean states = false;
+	public byte[] TerminalMutualAuth(byte[] cert, RSAPrivateKey privKey){
+		byte[] cardCert = null;
+		byte[] response1 = null;
+		byte[] response2 = null;
+		byte[] sessionKey = null;
+		
 		
 		//byte[] rtCert = readFiles(certFilename);  //Read Certificate for  Terminal
 		byte[] nounce = util.GenerateRandomBytes(NONCE_LENGTH); //generate nonces
@@ -57,42 +62,53 @@ public class MutualAuthentication {
 		System.arraycopy(cert, CV.PUBMODULUS+1, pack2, 0, CV.SIG_LENGTH);
 		System.arraycopy(nounce, 0, pack2, CV.SIG_LENGTH, nounce.length);
 		
-		//TODO: send to card
-		
-		//TODO: GET PACKAGE FROM CARD
-		byte[] scPack1 = new byte[128]; //received 1st package from sc
-		byte[] scPack2 = new byte[128]; //received 2nd package from sc
-		byte[] scPack3 = new byte[128]; //received 3nd package from sc
-		byte[] scPack4 = new byte[128]; //received 4nd package from sc
-		
-		//get The private Key
-		//RSAPrivateKey rtPrivKey = GetPrivateKeyFromFile("RTPrivateKey");
-		byte[] scDataPack1 = RSADecrypt(scPack1, privKey);
-		byte[] scDataPack2 = RSADecrypt(scPack2, privKey);
-		byte[] scDataPack3 = RSADecrypt(scPack3, privKey);
-		byte[] scDataPack4 = RSADecrypt(scPack4, privKey);
-		
-		//combine the decrypted package
-		byte[] scPack = serial.combineThePackage(scDataPack1, scDataPack2, scDataPack3, scDataPack4);
-		
-		//split card certificate and the card data {N, Ktmp}Sig
-		byte[] cardCert = new byte[CV.CARDCERT_LENGTH];
-		System.arraycopy(scPack, 0, cardCert, 0, CV.CARDCERT_LENGTH);		
-		byte[] cardData = new byte[CV.CARDDATA_LENGTH];
-		System.arraycopy(scPack, CV.CARDCERT_LENGTH, cardData, 0, CV.CARDDATA_LENGTH);
-		//get card public key (from cardCert)
-		byte[] certPubKey = serial.getPublicKeyFromCert(cardCert);
-		//get signature from cardData
-		byte[] cardDataSig = serial.getSigFromCert(cardData);
-		//Verify the certificate
-		if(certVerify(cardCert)){
-			//Verify the cardData {N, Ktmp} signature
-			if(sigVerif(cardData, certPubKey, cardDataSig)){
-				//TODO send session key to card
-				states = true;
+		//TODO: send to card  // consider while loop. if the card is not responding ?
+		response1 = CT.sendToCard(pack1, CT.INS_AUTH_1);
+		if(response1 != null) 
+			response2 = CT.sendToCard(pack2, CT.INS_AUTH_2);
+		if(response2 != null){
+			//TODO: GET PACKAGE FROM CARD -- SIZE 128
+			byte[] scPack1 = CT.sendToCard(null, CT.INS_AUTH_3); //received 1st package from sc
+			byte[] scPack2 = CT.sendToCard(null, CT.INS_AUTH_4); //received 2nd package from sc
+			byte[] scPack3 = CT.sendToCard(null, CT.INS_AUTH_5); //received 3nd package from sc
+			byte[] scPack4 = CT.sendToCard(null, CT.INS_AUTH_6); //received 4nd package from sc
+			
+			//get The private Key
+			//RSAPrivateKey rtPrivKey = GetPrivateKeyFromFile("RTPrivateKey");
+			byte[] scDataPack1 = RSADecrypt(scPack1, privKey);
+			byte[] scDataPack2 = RSADecrypt(scPack2, privKey);
+			byte[] scDataPack3 = RSADecrypt(scPack3, privKey);
+			byte[] scDataPack4 = RSADecrypt(scPack4, privKey);
+			
+			//combine the decrypted package
+			byte[] scPack = serial.combineThePackage(scDataPack1, scDataPack2, scDataPack3, scDataPack4);
+			
+			//split card certificate and the card data {N, Ktmp}Sig
+			cardCert = new byte[CV.CARDCERT_LENGTH];
+			System.arraycopy(scPack, 0, cardCert, 0, CV.CARDCERT_LENGTH);		
+			byte[] cardData = new byte[CV.CARDDATA_LENGTH];
+			System.arraycopy(scPack, CV.CARDCERT_LENGTH, cardData, 0, CV.CARDDATA_LENGTH);
+			//get card public key (from cardCert)
+			byte[] certPubKey = serial.getPublicKeyFromCert(cardCert);
+			//get signature from cardData
+			byte[] cardDataSig = serial.getSigFromCert(cardData);
+			//Verify the certificate
+			if(certVerify(cardCert)){
+				//Verify the cardData {N, Ktmp} signature
+				if(sigVerif(cardData, certPubKey, cardDataSig)){
+					//TODO send session key to card
+					CT.sendToCard(null, CT.INS_AUTH_7, sessionKey);
+				}else{
+					//Emptying the card certificate --> the card cert is not valid
+					cardCert = null;
+				}
+			}else{
+				//Emptying the card certificate --> the card cert is not valid
+				cardCert = null;
 			}
 		}
-		return states;
+		CT.stopThread();
+		return cardCert;
 	}
 	
 	/**
@@ -157,7 +173,7 @@ public class MutualAuthentication {
 		ma.TerminalMutualAuth(null, null);
 	}
 	
-	private byte[] readFiles(String filename) {
+	public byte[] readFiles(String filename) {
 		FileInputStream file;
 		byte[] bytes = null;
 		try {
@@ -174,6 +190,8 @@ public class MutualAuthentication {
 		}
 		return bytes;
 	}
+	
+	
 	
 	
 	
