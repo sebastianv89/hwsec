@@ -1,5 +1,10 @@
 package backend;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -21,26 +26,29 @@ public class BackendRentalTerminal {
 	Backend be = new Backend();
 	Serialization serial = new Serialization();
 	ByteUtils byteUtil = new ByteUtils();
+	CardTerminalCommunication CT = new CardTerminalCommunication();
+	MutualAuthentication MA = new MutualAuthentication();
 	
 	public BackendRentalTerminal(){
 		
 	}
 	
-	private byte[] ReadCertFromSmartCard(){
-		byte[] cert = null;
-		
-		
-		return cert;
+	private byte[] GetRTCert(){
+		String RTcertFile = "RTCert";
+		byte[] rtCert = MA.readFiles(RTcertFile);  //Read Certificate from Rental Terminal
+		return rtCert;
 	}
 	
-	private byte[] MutualAuthenticationRT_S(){
-		byte[] cert = ReadCertFromSmartCard();
-		//TODO:
-		//Check Mutual Authentication between Rental Terminal and SmartCards
-		//Need to do a revocation check as well		
-	
-		return cert;
-		
+	private RSAPrivateKey GetRTPrivateKey(){
+		byte[] privKeyByte = MA.readFiles("RTPrivateKey");
+		RSAPrivateKey rtPrivKey = null;
+		try {
+			rtPrivKey = (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(privKeyByte));
+		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return rtPrivKey;
 	}
 	
 	/**
@@ -51,7 +59,7 @@ public class BackendRentalTerminal {
 	 */
 	public void RegisterNewCustomer(String name){		
 		//1. read from the card and do mutual authentication
-		byte[] cert = MutualAuthenticationRT_S();
+		byte[] cert = MA.TerminalMutualAuth(GetRTCert(), GetRTPrivateKey());
 		
 		//2a. renew the certificate
 		byte[] newCert = null;
@@ -81,7 +89,8 @@ public class BackendRentalTerminal {
 	 */
 	public Card TopUpCard(short cardKm){
 		//1. read from the card and do mutual authentication
-		byte[] cert = MutualAuthenticationRT_S();
+		byte[] cert = MA.TerminalMutualAuth(GetRTCert(), GetRTPrivateKey());
+		
 		short km = 0; //read this from card
 		byte[] newCert = null;
 		
@@ -105,6 +114,7 @@ public class BackendRentalTerminal {
 			//TODO update to the smartcard 
 			card.setKilometers(km + cardKm);
 			
+			
 		} catch (RevokedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -115,7 +125,9 @@ public class BackendRentalTerminal {
 	
 	//Refund the kilometers
 	public Card refundKilometers(){
-		byte[] cert = MutualAuthenticationRT_S(); 		//1. read from the card and do mutual authentication
+		//1. read from the card and do mutual authentication
+		byte[] cert = MA.TerminalMutualAuth(GetRTCert(), GetRTPrivateKey());
+		
 		Card card = getCardDB(cert); //2. get card data from database
 		card.setKilometers(0); 		//3. do the refund
 		db.updateKilometersExpiration(0, card.getExpDate(), card.getID());  /*4. update to database  */
