@@ -103,12 +103,7 @@ public class VehicleTerminal {
 		while (!ready)
 			;
 
-//		InitData data = backend.registerNewCard();
-//		personalize(data.privateKey, data.caVerifKey, data.certificate);
-
-		// card is now personalized
-
-		stopThread = true;
+		
 
 	}
 	
@@ -152,7 +147,7 @@ public class VehicleTerminal {
 	 * Authenticates with the card and sets the card modulus in a Card object
 	 */
 	private void mutualAuthentication() {
-		MutualAuthentication mu = new MutualAuthentication();
+//		MutualAuthentication mu = new MutualAuthentication();
 		byte[] cert = mu.TerminalMutualAuth(vtCertificate, vtPrivKey);
 		// get the card pubkey (=mod) from the certificate
 		byte[] cardmod = new byte[128];
@@ -165,9 +160,6 @@ public class VehicleTerminal {
 	 * We receive a signal here when the card wants to ignite the vehicle
 	 */
 	private void startIgnition() {
-		String message = new String();
-//		message = "ignition";
-//		byte[] data = message.getBytes();
 		byte[] ignitionReply = sendToCard(MSG_IGNITION, INS_VT_START, sessionKey);
 		// Split this block into: reply data and signature
 		byte[] rData = new byte[3]; //we expect iR[0] for the status msg, plus a short "km" (2 bytes)
@@ -185,7 +177,7 @@ public class VehicleTerminal {
 				System.arraycopy(rData, 1, km, 0, 2);
 				ByteUtils bu = new ByteUtils();
 				short km2 = bu.bytesToShort(km);
-				card.setKilometers(km2); //TODO: Read this from the replyData
+				card.setKilometers(km2);
 				addLogEntry(km, signature);
 			} else if (rData[0] == MSG_NOT_ENOUGH_KM ) {
 				addLogEntry("Not enough km".getBytes(), signature);
@@ -193,10 +185,10 @@ public class VehicleTerminal {
 			
 			
 		} else {
-			//TODO: Signature didnt match, what do we do?
+			//TODO: Signature didnt match, abort ABORT LEAVE THE SHIP NOW!!!
+			card.setSessionKey(null);
+			//TODO: Display message
 		}
-		
-		// Call driving???
 	}
 	
 	/*
@@ -254,12 +246,19 @@ public class VehicleTerminal {
 		if (sigCheck == true) {
 			if (rData[0] == MSG_STOP_OK) {
 				addLogEntry(rData, signature);
+				stopThread = true;
 				//TODO: Display a message that it's safe to remove the card
 			} else { 
-				//TODO: Got a different message as what we expected, what do we do?
+				//TODO: Got a different message as what we expected, ABORT ALL THE THINGS!
+				card.setSessionKey(null);
+				stopThread = true;
+				//TODO: Display a message that the usr should re-insert the card
 			}
 		} else {
-			//TODO: Signature check failed, what do we do?
+			//TODO: Signature check failed, ABORT!
+			card.setSessionKey(null);
+			stopThread = true;
+			//TODO: Display a message that the user should re-insert the card
 		}
 		
 		
@@ -268,6 +267,9 @@ public class VehicleTerminal {
 
 	private void safeStop() {
 		//perform a safeStop
+		// Destroy session key and stop the communication with the card
+		card.setSessionKey(null);
+		stopThread = true;
 	}
 	
 	private boolean startVehicle() {
@@ -281,7 +283,6 @@ public class VehicleTerminal {
 			file.write(data);
 			file.close();
 		} catch ( IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -294,7 +295,6 @@ public class VehicleTerminal {
 			file.write(signature);
 			file.close();
 		} catch ( IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -309,10 +309,8 @@ public class VehicleTerminal {
 			file.close();
 			vtCertificate = bytes;
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -327,16 +325,12 @@ public class VehicleTerminal {
 			vtPrivKey = (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(bytes));
 
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -353,13 +347,10 @@ public class VehicleTerminal {
 			caPubKey = (RSAPublicKey) factory.generatePublic(pubspec);
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -376,100 +367,14 @@ public class VehicleTerminal {
 			vtPubKey = (RSAPublicKey) factory.generatePublic(pubspec);
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-
-	// VT -> S:cert_VT, nounce
-	// S -> RT:{|cert_S,{<nounce, K_tmp>}SK_s|}EK_VT
-	// RT : checks that expiration <= current time
-	// RT -> S:{K_VT,S}K_tmp
-
-//	public boolean isCardPresent() {
-//
-//
-//		TerminalFactory factory = TerminalFactory.getDefault();
-//		CardTerminals ct = factory.terminals();
-//		List<CardTerminal> cs;
-//
-//		try {
-//			cs = ct.list(CardTerminals.State.CARD_PRESENT);
-//			for (CardTerminal c : cs) {
-//				if (c.isCardPresent()){
-//					return this.ready;
-//				}
-//			}
-//		} catch (CardException e) {
-//			// Do nothing
-//		}
-//
-//		return false;
-//	}
-//
-//	public void IssuingCommandsHandler(VehicleTerminal vt) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
-//	}
-//
-//
-//
-//	public boolean MutualAuthenticationVT_S(){
-//		boolean status = true;
-//		//check mutual authentication between vehicle terminal and card
-//
-//		return status;
-//
-//		//generating random number (nonce)
-//		SecureRandom random = new SecureRandom();
-//		byte bytes[] = new byte[20];
-//		random.nextBytes(bytes);
-//
-//		Random rnd = Random.getInstance(Random.ALG_SECURE_RANDOM);
-//		rnd.generateData(RP, (short)0, (short)16);
-//	}
-//
-//
-//
-//
-//	// communication with the smartcard
-//	//have to create two temp buffer on smartcard for the process
-//	/**
-//	 * @param apdu
-//	 * @param dest
-//	 * @param offset
-//	 * @param length
-//	 */
-//	private void readBuffer(APDU apdu, byte[] dest, short offset, short length) {
-//		byte[] buf = apdu.getBuffer();
-//		temp_short_1 = apdu.setIncomingAndReceive();
-//		temp_short_2 = 0;
-//		Util.arrayCopy(buf, OFFSET_CDATA, dest, offset, temp_short_1);
-//		while ((short) (temp_short_2 + temp_short_1) < length) {
-//			temp_short_2 += temp_short_1;
-//			offset += temp_short_1;
-//			temp_short_1 = (short) apdu.receiveBytes(OFFSET_CDATA);
-//			Util.arrayCopy(Buff, OFFSET_CDATA, dest, offset, temp_short_1);
-//		}
-//
-//
-//		SecureRandom random = new SecureRandom();
-//		byte[] random_nonce = new byte[8];
-//		random.nextBytes(random_nonce);
-//		capdu = new CommandAPDU(CLA_ISSUE, SET_RANDOM_DATA_NONCE, (byte) 0, (byte) 0, random_nonce, 8);
-//		terminal.sendCommandAPDU(capdu); 
-//	}
-//	/*private String convertLongDateToString(long expDate){
-//    Date date=new Date(expDate);
-//    SimpleDateFormat df2 = new SimpleDateFormat("dd/MM/yy");
-//    String dateText = df2.format(date);
-//    System.out.println(dateText);
-//    return dateText;*/
 
 	/** The CardThread handles the connection with the smartcard */
 	class CardThread extends Thread {
@@ -477,8 +382,7 @@ public class VehicleTerminal {
 			try {
 				TerminalFactory tf = TerminalFactory.getDefault();
 				CardTerminals ct = tf.terminals();
-				List<CardTerminal> cs = ct
-						.list(CardTerminals.State.CARD_PRESENT);
+				List<CardTerminal> cs = ct.list(CardTerminals.State.CARD_PRESENT);
 				if (cs.isEmpty()) {
 					System.err.println("No terminals with a card found.");
 					return;
