@@ -4,7 +4,7 @@ public class Card {
 	int id;
 	int customerID; 
 	String customerName;
-	int kilometers;
+	short kilometers;
 	long expiration;
 	String expString;
 	int revocation;
@@ -17,7 +17,7 @@ public class Card {
 		
 	}
 	
-	public Card(int ID, int custID, String custName, int km, long exp, 
+	public Card(int ID, int custID, String custName, short km, long exp, 
 			int revoke, String cardPK){
 		this.id = ID;
 		this.customerID = custID;
@@ -28,7 +28,7 @@ public class Card {
 		this.cardPublicKey = cardPK;
 	}
 	
-	public void setKilometers(int kmNew){
+	public void setKilometers(short kmNew){
 		this.kilometers = kmNew;
 	}
 	
