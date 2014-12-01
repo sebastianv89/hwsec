@@ -23,6 +23,7 @@ import java.security.spec.X509EncodedKeySpec;
  * */
 public class CertAuth {
 
+	ByteUtils bu = new ByteUtils();
 	ConstantValues cv = new ConstantValues();
 	
 	public enum TYPE {
@@ -62,8 +63,8 @@ public class CertAuth {
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey) {
 		byte[] byteTuple = new byte[1 + cv.PUBMODULUS];
 		byteTuple[0] = type.code;
-		byte[] pk = publicKey.getModulus().toByteArray();
-		System.arraycopy(pk, 1, byteTuple, 1, pk.length - 1);
+		byte[] pk = bu.getBytes(publicKey.getModulus());
+		System.arraycopy(pk, 0, byteTuple, 1, pk.length);
 		
 		byte[] signature = signRaw(byteTuple);
 		
@@ -83,8 +84,8 @@ public class CertAuth {
 	public byte[] makeCert(TYPE type, RSAPublicKey publicKey, long exp) {
 		byte[] byteTuple = new byte[1 + cv.PUBMODULUS + cv.EXP_LENGTH];
 		byteTuple[0] = type.code;
-		byte[] pk = publicKey.getModulus().toByteArray(); 
-		System.arraycopy(pk, 1, byteTuple, 1, pk.length - 1);
+		byte[] pk = bu.getBytes(publicKey.getModulus()); 
+		System.arraycopy(pk, 0, byteTuple, 1, pk.length);
 		byte[] expbytes = ByteBuffer.allocate(8).putLong(exp).array(); // long -> bytes
 		
 		System.arraycopy(expbytes, 0, byteTuple, pk.length, expbytes.length);
