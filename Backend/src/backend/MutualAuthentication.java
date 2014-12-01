@@ -213,9 +213,9 @@ public class MutualAuthentication {
 			e.printStackTrace();
 		}
 		
-		System.out.println("This is the public key, gotten from the card:");
-		System.out.println(pub);
-		System.out.println(util.toHexString(padded));
+		//System.out.println("This is the public key, gotten from the card:");
+		//System.out.println(pub);
+		//System.out.println(util.toHexString(padded));
 
 		Signature sig;
 		boolean result = false;
