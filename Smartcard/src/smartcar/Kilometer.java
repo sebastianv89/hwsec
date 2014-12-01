@@ -2,6 +2,9 @@ package smartcar;
 
 import javacard.framework.JCSystem;
 
+// FIXME: negative values
+// FIXME: overflow
+
 /**
  * Kilometer counter, with a round-robin memory implementation to avoid wear on
  * the EEPROM
@@ -61,6 +64,14 @@ public class Kilometer {
 
 	short getKm() {
 		return km[i];
+	}
+	
+	void topup(short km) {
+		byte j = (byte) ((i + 1) % N);
+		JCSystem.beginTransaction();
+		this.km[j] = (short) (this.km[i] + 1);
+		i = j;
+		JCSystem.commitTransaction();
 	}
 
 	void setKm(short km) {

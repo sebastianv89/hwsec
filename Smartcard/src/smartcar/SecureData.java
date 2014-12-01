@@ -83,32 +83,40 @@ public class SecureData {
 		rng = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
 	}
 
-	/** Public key encryption */
-	void publicEncrypt(byte[] plaintext, byte counter, byte[] ciphertext) {
+	/** Public key encryption
+	 * @return length of encrypted data
+	 */
+	short publicEncrypt(byte[] plaintext, byte counter, byte[] ciphertext) {
 		short inOffset = (short) (counter * SIZE_PUBENC_PLAIN);
 		short inSize = SIZE_PUBENC_PLAIN; // FIXME: size 4th msg
-		pubEncrypter
+		return pubEncrypter
 				.doFinal(plaintext, inOffset, inSize, ciphertext, (short) 0);
 	}
 
 	/**
 	 * Create the response for mutual authentication in the tmp buffer, This
 	 * method also sets the temporary key
+	 * 
+	 * @return size of full message
 	 */
-	void createAuthResponse(byte[] buffer) {
+	short createAuthResponse(byte[] buffer) {
+		short len = SIZE_CERT_CARD;
 		// place the certificate
-		Util.arrayCopy(certificate, (short) 0, buffer, (short) 0,
-				SIZE_CERT_CARD);
+		Util.arrayCopy(certificate, (short) 0, buffer, (short) 0, len);
+
+		len += SIZE_NONCE;
 
 		// generate temporary key
-		rng.generateData(buffer, (short) (SIZE_CERT_CARD + SIZE_NONCE),
-				SIZE_NONCE);
-		setTmpKey(buffer, (short) (SIZE_CERT_CARD + SIZE_NONCE));
+		rng.generateData(buffer, len, SIZE_NONCE);
+		setTmpKey(buffer, len);
+
+		len += SIZE_AES_KEY;
 
 		// sign nonce + tmpkey
-		signer.sign(buffer, SIZE_CERT_CARD,
-				(short) (SIZE_NONCE + SIZE_AES_KEY), buffer,
-				(short) (SIZE_CERT_CARD + (short) (SIZE_NONCE + SIZE_AES_KEY)));
+		len += signer.sign(buffer, SIZE_CERT_CARD,
+				(short) (SIZE_NONCE + SIZE_AES_KEY), buffer, len);
+		
+		return len;
 	}
 
 	/** Validate a terminal certificate */
@@ -117,22 +125,28 @@ public class SecureData {
 				sigOfs, SIZE_RSA_SIG);
 	}
 
-	/** Sign a message */
-	void sign(byte[] data, short dataOfs, short dataLen, byte[] sig,
+	/**
+	 * Sign a message
+	 * 
+	 * @return size of signature
+	 */
+	short sign(byte[] data, short dataOfs, short dataLen, byte[] sig,
 			short sigOfs) {
-		signer.sign(data, dataOfs, dataLen, sig, sigOfs);
+		return signer.sign(data, dataOfs, dataLen, sig, sigOfs);
 	}
 
 	/** Encrypt with the session key */
-	void sessionEncrypt(byte[] plain, short plainOfs, short plainLen,
+	short sessionEncrypt(byte[] plain, short plainOfs, short plainLen,
 			byte[] cipher, short cipherOfs) {
-		secretEncrypter.doFinal(plain, plainOfs, plainLen, cipher, cipherOfs);
+		return secretEncrypter.doFinal(plain, plainOfs, plainLen, cipher,
+				cipherOfs);
 	}
 
 	/** Decrypt with the session key */
-	void sessionDecrypt(byte[] cipher, short cipherOfs, short cipherLen,
+	short sessionDecrypt(byte[] cipher, short cipherOfs, short cipherLen,
 			byte[] plain, short plainOfs) {
-		secretDecrypter.doFinal(cipher, cipherOfs, cipherLen, plain, plainOfs);
+		return secretDecrypter.doFinal(cipher, cipherOfs, cipherLen, plain,
+				plainOfs);
 	}
 
 	/** Initialize the workers after personalization */
@@ -142,12 +156,17 @@ public class SecureData {
 	}
 
 	/** Set the (symmetric) key for encryption and decryption */
-	void setSecretKey(byte[] buffer, short offset) {
+	void setSessionKey(byte[] buffer, short offset) {
 		sessionKey.setKey(buffer, offset);
 		secretEncrypter.init(sessionKey, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD);
 		secretDecrypter.init(sessionKey, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD);
 	}
-	
+
+	/** @return whether the session key is initialized */
+	boolean hasSessionKey() {
+		return sessionKey.isInitialized();
+	}
+
 	/** Destroy the session key */
 	void destroySessionKey() {
 		sessionKey.clearKey();
@@ -182,6 +201,11 @@ public class SecureData {
 	/** Set the (public) key modulus (N) for the CA verification key */
 	void setCAVerifKeyMod(byte[] buffer, short offset) {
 		caVerificationKey.setModulus(buffer, offset, SIZE_RSA_KEY_MOD);
+	}
+
+	/** Set the certificate */
+	void setCert(byte[] buffer, short offset) {
+		Util.arrayCopy(buffer, offset, certificate, (short) 0, SIZE_CERT_CARD);
 	}
 
 	/** Set the data part of the smartcard certificate */
