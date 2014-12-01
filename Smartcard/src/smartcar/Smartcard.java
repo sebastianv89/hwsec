@@ -153,26 +153,23 @@ public class Smartcard extends Applet implements ISO7816 {
 					if (lc != SIZE_PT_PERSONALIZE_CERT_DATA) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (getLastIns() == INS_PT_PERSONALIZE_VKCA) {
-						personalizeCertData(apdu, buf);
-					} else {
+					if (getLastIns() != INS_PT_PERSONALIZE_VKCA) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					personalizeCertData(apdu, buf);
 					break;
 				case INS_PT_PERSONALIZE_CERT_SIG:
 					if (lc != SIZE_PT_PERSONALIZE_CERT_SIG) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (getLastIns() == INS_PT_PERSONALIZE_CERT_DATA) {
-						personalizeCertSig(apdu, buf);
-						sd.init();
-						if (!sd.validateOwnCert()) {
-							ISOException.throwIt(SW_WRONG_DATA);
-						}
-						state = STATE_PERSONALIZED;
-					} else {
+					if (getLastIns() != INS_PT_PERSONALIZE_CERT_DATA) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					personalizeCertSig(apdu, buf);
+					if (!sd.init()) {
+						ISOException.throwIt(SW_WRONG_DATA);
+					}
+					state = STATE_PERSONALIZED;
 					break;
 				default:
 					ISOException.throwIt(SW_INS_NOT_SUPPORTED);
@@ -190,118 +187,106 @@ public class Smartcard extends Applet implements ISO7816 {
 					if (lc != SIZE_AUTH_2) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (getLastIns() == INS_AUTH_1) {
-						authenticate2(apdu, buf);
-					} else {
+					if (getLastIns() != INS_AUTH_1) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					authenticate2(apdu, buf);
 					break;
 				case INS_AUTH_3:
-					if (getLastIns() == INS_AUTH_2) {
-						authenticate3(apdu, buf);
-					} else {
+					if (getLastIns() != INS_AUTH_2) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					authenticate3(apdu, buf);
 					break;
 				case INS_AUTH_4:
-					if (getLastIns() == INS_AUTH_3) {
-						authenticate4(apdu, buf);
-					} else {
+					if (getLastIns() != INS_AUTH_3) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					authenticate4(apdu, buf);
 					break;
 				case INS_AUTH_5:
-					if (getLastIns() == INS_AUTH_4) {
-						authenticate5(apdu, buf);
-					} else {
+					if (getLastIns() != INS_AUTH_4) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					authenticate5(apdu, buf);
 					break;
 				case INS_AUTH_6:
 					if (lc != SIZE_AUTH_6) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (getLastIns() == INS_AUTH_5) {
-						authenticate6(apdu, buf);
-					} else {
+					if (getLastIns() != INS_AUTH_5) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					authenticate6(apdu, buf);
 					break;
 				case INS_VT_START:
 					if (lc != SIZE_VT_START) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (isAuthenticated() && getTermType() == TYPE_TERMINAL_VT) {
-						startVehicle(apdu, buf);
-					} else {
+					if (!isAuthenticated() || getTermType() != TYPE_TERMINAL_VT) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					startVehicle(apdu, buf);
 					break;
 				case INS_VT_TICK_KM:
 					if (lc != SIZE_VT_TICK_KM) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (isAuthenticated() && getTermType() == TYPE_TERMINAL_VT
-							&& isIgnited()) {
-						tick(apdu, buf);
-					} else {
+					if (!isAuthenticated() || getTermType() != TYPE_TERMINAL_VT
+							|| !isIgnited()) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					tick(apdu, buf);
 					break;
 				case INS_VT_STOP:
 					if (lc != SIZE_VT_STOP) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (isAuthenticated() && getTermType() == TYPE_TERMINAL_VT
-							&& isIgnited()) {
-						stopVehicle(apdu, buf);
-					} else {
+					if (!isAuthenticated() || getTermType() != TYPE_TERMINAL_VT
+							|| !isIgnited()) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					stopVehicle(apdu, buf);
 					break;
 				case INS_RT_RENEW_CERT_1:
 					if (lc != SIZE_RT_RENEW_CERT_1) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (isAuthenticated() && getTermType() == TYPE_TERMINAL_RT
-							&& getLastIns() == INS_AUTH_6) {
-						renewCertificateData(apdu, buf);
-					} else {
+					if (!isAuthenticated() || getTermType() != TYPE_TERMINAL_RT
+							|| getLastIns() != INS_AUTH_6) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					renewCertificateData(apdu, buf);
 					break;
 				case INS_RT_RENEW_CERT_2:
 					if (lc != SIZE_RT_RENEW_CERT_2) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (isAuthenticated() && getTermType() == TYPE_TERMINAL_RT
-							&& getLastIns() == INS_RT_RENEW_CERT_1) {
-						renewCertificateSig(apdu, buf);
-					} else {
+					if (!isAuthenticated() || getTermType() != TYPE_TERMINAL_RT
+							|| getLastIns() != INS_RT_RENEW_CERT_1) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					renewCertificateSig(apdu, buf);
 					break;
 				case INS_RT_TOPUP_KM:
 					if (lc != SIZE_RT_TOPUP_KM) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (isAuthenticated() && getTermType() == TYPE_TERMINAL_RT
-							&& getLastIns() == INS_RT_RENEW_CERT_2) {
-						topup(apdu, buf);
-					} else {
+					if (!isAuthenticated() || getTermType() != TYPE_TERMINAL_RT
+							|| getLastIns() != INS_RT_RENEW_CERT_2) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					topup(apdu, buf);
 					break;
 				case INS_RT_REFUND_KM:
 					if (lc != SIZE_RT_REFUND_KM) {
 						ISOException.throwIt(SW_WRONG_LENGTH);
 					}
-					if (isAuthenticated() && getTermType() == TYPE_TERMINAL_RT
-							&& getLastIns() == INS_RT_RENEW_CERT_2) {
-						refund(apdu, buf);
-					} else {
+					if (!isAuthenticated() || getTermType() != TYPE_TERMINAL_RT
+							|| getLastIns() != INS_RT_RENEW_CERT_2) {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
+					refund(apdu, buf);
 					break;
 				default:
 					ISOException.throwIt(SW_INS_NOT_SUPPORTED);
@@ -340,7 +325,7 @@ public class Smartcard extends Applet implements ISO7816 {
 	private void authenticate1(APDU apdu, byte[] buf) {
 		apdu.setIncomingAndReceive();
 		// read the certificate data
-		Util.arrayCopy(buf, (short) 0, tmp, (short) 0,
+		Util.arrayCopy(buf, (short) OFFSET_CDATA, tmp, (short) 0,
 				SecureData.SIZE_CERT_DATA_TERM);
 	}
 
@@ -348,34 +333,33 @@ public class Smartcard extends Applet implements ISO7816 {
 	private void authenticate2(APDU apdu, byte[] buf) {
 		apdu.setIncomingAndReceive();
 		// read the certificate signature
-		Util.arrayCopy(buf, (short) 0, tmp, SecureData.SIZE_CERT_DATA_TERM,
-				SecureData.SIZE_RSA_SIG);
+		Util.arrayCopy(buf, (short) OFFSET_CDATA, tmp,
+				SecureData.SIZE_CERT_DATA_TERM, SecureData.SIZE_RSA_SIG);
 
 		// validate the terminal certificate
-		try {
-			if (!sd.validateCert(tmp, (short) 0, tmp,
-					SecureData.SIZE_CERT_DATA_TERM)) {
-				ISOException.throwIt(SW_WRONG_DATA);
-			}
-		} catch (CryptoException e) {
-			Util.setShort(buf, (short) 0, e.getReason());
-			apdu.setOutgoingAndSend((short) 0, (short) 2);
-			ISOException.throwIt(SW_WRONG_P1P2);
+		if (!sd.validateCert(tmp, (short) 0, tmp,
+				SecureData.SIZE_CERT_DATA_TERM)) {
+			ISOException.throwIt(SW_WRONG_DATA);
 		}
 
 		// store certificate properties only after validation of the cert
 		setTermType(tmp[0]);
 		sd.setPubEncryptKeyMod(tmp, (short) 1);
 		// move nonce to correct position
-		Util.arrayCopy(tmp, SecureData.SIZE_RSA_KEY_MOD, tmp,
+		Util.arrayCopy(buf, SecureData.SIZE_RSA_SIG, tmp,
 				SecureData.SIZE_CERT_CARD, SecureData.SIZE_NONCE);
 
 		// create the unencrypted response and set the temporary symmetric key
-		sd.createAuthResponse(tmp);
+		try {
+			sd.createAuthResponse(tmp);
+		} catch (CryptoException e) {
+			Util.setShort(buf, OFFSET_CDATA, e.getReason());
+			apdu.setOutgoingAndSend(OFFSET_CDATA, (short) 2);
+		}
 
 		// send back the first encrypted blob
 		short len = sd.publicEncrypt(tmp, (byte) 0, buf);
-		apdu.setOutgoingAndSend((short) 0, len);
+		apdu.setOutgoingAndSend((short) OFFSET_CDATA, len);
 	}
 
 	/** Protocols 6.4 and 6.5 (mutual auth), step 2 (part 2) */

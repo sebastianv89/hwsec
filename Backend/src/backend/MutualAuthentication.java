@@ -13,6 +13,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.Cipher;
 
@@ -61,10 +62,26 @@ public class MutualAuthentication {
 		System.arraycopy(cert, CV.PUBMODULUS+1, pack2, 0, CV.SIG_LENGTH);
 		System.arraycopy(nounce, 0, pack2, CV.SIG_LENGTH, nounce.length);
 		
-		CertAuth ca = new CertAuth();
 		byte[] sig = new byte[CV.SIG_LENGTH];
 		System.arraycopy(pack2, 0, sig, 0, CV.SIG_LENGTH);
-		System.err.println("checking signature of terminal: " + sigVerif(pack1, ca.capubkey, sig));
+		/* DEBUG
+		try {
+			FileInputStream file = new FileInputStream("CAPublicKey");
+			byte[] bytes = new byte[file.available()];
+			file.read(bytes);
+			X509EncodedKeySpec pubspec = new X509EncodedKeySpec(bytes);
+			KeyFactory factory = KeyFactory.getInstance("RSA");
+			RSAPublicKey capubkey = (RSAPublicKey) factory.generatePublic(pubspec);
+			System.err.println("checking signature of terminal: " + sigVerif(pack1, util.getBytes(capubkey.getModulus()), sig));
+			file.close();
+			
+			CertAuth ca = new CertAuth();
+			System.err.println("check again: " + sigVerif(pack1, util.getBytes(ca.getVerificationKey().getModulus()), sig));
+		} catch (Exception e) {
+			System.err.println(e);
+			System.exit(1);
+		}
+		*/
 
 		//TODO: send to card  // consider while loop. if the card is not responding ?
 		CT.sendToCard(pack1, CT.INS_AUTH_1);
@@ -134,28 +151,6 @@ public class MutualAuthentication {
 		return result;
 	}
 
-	public boolean sigVerif(byte[] data, RSAPublicKey pub, byte[] signature) {
-		Signature sig;
-		boolean result = false;
-		try {
-			sig = Signature.getInstance("MD5WithRSA");
-			sig.initVerify(pub);
-			sig.update(data);
-			result = sig.verify(signature);
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SignatureException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return result;
-	}
-	
 	public boolean sigVerif(byte[] data, byte[] pubKey, byte[] signature) {
 		// Convert bytekey (public Modulus into a RSAPublicKey
 		RSAPublicKeySpec spec = new RSAPublicKeySpec(new BigInteger(pubKey), CV.PUBEXPONENT_BYTE);
