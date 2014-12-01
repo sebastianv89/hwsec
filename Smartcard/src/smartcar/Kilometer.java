@@ -2,23 +2,34 @@ package smartcar;
 
 import javacard.framework.JCSystem;
 
-// FIXME: negative values
-// FIXME: overflow
-
 /**
  * Kilometer counter, with a round-robin memory implementation to avoid wear on
  * the EEPROM
  */
 public class Kilometer {
 
+	public static final short MAX_KM = 32767; // 0x7fff
+
 	private static final byte N = 8;
 
-	private short[] km;
+	private short[] value;
 	private byte i;
 
 	Kilometer() {
 		i = 0;
-		km = new short[N];
+		value = new short[N];
+	}
+
+	short getKm() {
+		return value[i];
+	}
+
+	private void setKm(short km) {
+		byte j = (byte) ((i + 1) % N);
+		JCSystem.beginTransaction();
+		value[j] = km;
+		i = j;
+		JCSystem.commitTransaction();
 	}
 
 	/**
@@ -27,62 +38,52 @@ public class Kilometer {
 	 * @return false if the counter is zero
 	 */
 	boolean tick() {
-		if (km[i] == 0) {
+		short km = getKm();
+		if (km <= 0) {
 			return false;
 		}
-		byte j = (byte) ((i + 1) % N);
-		JCSystem.beginTransaction();
-		km[j] = (short) (km[i] - 1);
-		i = j;
-		JCSystem.commitTransaction();
+		setKm((short) (km - 1));
 		return true;
 	}
-	
+
 	/**
 	 * Tick two km
+	 * 
 	 * @return false if the counter is smaller than 2
 	 */
 	boolean start() {
-		if (km[i] <= 1) {
+		short km = getKm();
+		if (km <= 1) {
 			return false;
 		}
-		byte j = (byte) ((i + 1) % N);
-		JCSystem.beginTransaction();
-		km[j] = (short) (km[i] - 2);
-		i = j;
-		JCSystem.commitTransaction();
+		setKm((short) (km - 2));
 		return true;
 	}
-	
-	void stop() {
-		byte j = (byte) ((i + 1) % N);
-		JCSystem.beginTransaction();
-		km[j] = (short) (km[i] + 1);
-		i = j;
-		JCSystem.commitTransaction();
+
+	boolean stop() {
+		if (value[i] == MAX_KM) {
+			return false;
+		}
+		setKm((short) (getKm() + 1));
+		return true;
 	}
 
-	short getKm() {
-		return km[i];
+	boolean topupAllowed(short km) {
+		return km >= 0 && getKm() < (short) (MAX_KM - km);
 	}
-	
+
 	void topup(short km) {
-		byte j = (byte) ((i + 1) % N);
-		JCSystem.beginTransaction();
-		this.km[j] = (short) (this.km[i] + 1);
-		i = j;
-		JCSystem.commitTransaction();
-	}
-
-	void setKm(short km) {
-		this.km[i] = km;
+		if (!topupAllowed(km)) {
+			return;
+		}
+		setKm(km);
 	}
 
 	void reset() {
 		byte j;
 		JCSystem.beginTransaction();
 		for (j = 0; j < N; ++j) {
-			km[j] = (short) 0;
+			value[j] = (short) 0;
 		}
 		i = 0;
 		JCSystem.commitTransaction();

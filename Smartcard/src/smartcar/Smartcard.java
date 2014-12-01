@@ -106,8 +106,10 @@ public class Smartcard extends Applet implements ISO7816 {
 		state = STATE_INIT;
 		protocolState = JCSystem.makeTransientByteArray((short) 4,
 				JCSystem.CLEAR_ON_DESELECT);
-		tmp = JCSystem.makeTransientByteArray((short) 0x0300,
-				JCSystem.CLEAR_ON_DESELECT); // TODO: tighter length
+		short maxLength = SecureData.SIZE_CERT_CARD + SecureData.SIZE_NONCE
+				+ SecureData.SIZE_AES_KEY + SecureData.SIZE_RSA_SIG;
+		tmp = JCSystem.makeTransientByteArray(maxLength,
+				JCSystem.CLEAR_ON_DESELECT);
 	}
 
 	public void process(APDU apdu) {
@@ -139,24 +141,31 @@ public class Smartcard extends Applet implements ISO7816 {
 			case STATE_INIT:
 				switch (ins) {
 				case INS_PT_PERSONALIZE_SK:
-					personalizeSK(apdu, buf);
+					if (lc == SIZE_PT_PERSONALIZE_SK) {
+						personalizeSK(apdu, buf);
+					} else {
+						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
+					}
 					break;
 				case INS_PT_PERSONALIZE_VKCA:
-					if (getLastIns() == INS_PT_PERSONALIZE_SK) {
+					if (getLastIns() == INS_PT_PERSONALIZE_SK
+							&& lc == SIZE_PT_PERSONALIZE_VKCA) {
 						personalizeVKCA(apdu, buf);
 					} else {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
 					break;
 				case INS_PT_PERSONALIZE_CERT_DATA:
-					if (getLastIns() == INS_PT_PERSONALIZE_VKCA) {
+					if (getLastIns() == INS_PT_PERSONALIZE_VKCA
+							&& lc == SIZE_PT_PERSONALIZE_CERT_DATA) {
 						personalizeCertData(apdu, buf);
 					} else {
 						ISOException.throwIt(SW_CONDITIONS_NOT_SATISFIED);
 					}
 					break;
 				case INS_PT_PERSONALIZE_CERT_SIG:
-					if (getLastIns() == INS_PT_PERSONALIZE_CERT_DATA) {
+					if (getLastIns() == INS_PT_PERSONALIZE_CERT_DATA
+							&& lc == SIZE_PT_PERSONALIZE_CERT_SIG) {
 						personalizeCertSig(apdu, buf);
 						sd.init();
 						state = STATE_PERSONALIZED;
@@ -171,7 +180,11 @@ public class Smartcard extends Applet implements ISO7816 {
 			case STATE_PERSONALIZED:
 				switch (ins) {
 				case INS_AUTH_1:
-					authenticate1(apdu, buf);
+					if (lc == SIZE_AUTH_1) {
+						authenticate1(apdu, buf);
+					} else {
+						ISOException.throwIt(SW_WRONG_LENGTH);
+					}
 					break;
 				case INS_AUTH_2:
 					if (getLastIns() == INS_AUTH_1) {
@@ -514,13 +527,16 @@ public class Smartcard extends Applet implements ISO7816 {
 	private void topup(APDU apdu, byte[] buf) {
 		// step 7
 		apdu.setIncomingAndReceive();
-		short len = sd.sessionDecrypt(buf, (short) 0, SecureData.SIZE_AES_BLOCKSIZE, tmp,
-				(short) 0);
+		short len = sd.sessionDecrypt(buf, (short) 0,
+				SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
 		if (len != 3 || tmp[0] != MSG_TOPUP) {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}
-		
+
 		short topupAmount = Util.getShort(tmp, (short) 1);
+		if (!km.topupAllowed(topupAmount)) {
+			ISOException.throwIt(SW_DATA_INVALID);
+		}
 
 		// step 8
 		len = 1;
@@ -532,7 +548,6 @@ public class Smartcard extends Applet implements ISO7816 {
 		len = sd.sessionEncrypt(tmp, (short) 0, len, buf, (short) 0);
 		apdu.setOutgoingAndSend((short) 0, len);
 
-		// TODO: is this code reached?
 		// step 9
 		km.topup(topupAmount);
 	}
@@ -541,15 +556,15 @@ public class Smartcard extends Applet implements ISO7816 {
 	private void refund(APDU apdu, byte[] buf) {
 		// step 7
 		apdu.setIncomingAndReceive();
-		short len = sd.sessionDecrypt(buf, (short) 0, SecureData.SIZE_AES_BLOCKSIZE, tmp,
-				(short) 0);
+		short len = sd.sessionDecrypt(buf, (short) 0,
+				SecureData.SIZE_AES_BLOCKSIZE, tmp, (short) 0);
 		if (len != 1 || tmp[0] != MSG_REFUND) {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}
 
 		// step 8
 		km.reset();
-		
+
 		// step 9
 		len = 1;
 		tmp[0] = MSG_REFUND_OK;

@@ -10,8 +10,6 @@ import javacard.security.RandomData;
 import javacard.security.Signature;
 import javacardx.crypto.Cipher;
 
-//TODO: transactions
-
 /**
  * Class for holding all persistent security data
  */
@@ -37,8 +35,8 @@ public class SecureData {
 	private static final byte[] RSA_PUB_EXP = { 0x01, 0x00, 0x01 };
 
 	// permanent crypto objects
-	private RSAPrivateKey signatureKey; // TODO: replace completely with signer
-	private RSAPublicKey caVerificationKey; // TODO: replace with caVerifier
+	private RSAPrivateKey signatureKey;
+	private RSAPublicKey caVerificationKey;
 	private AESKey sessionKey;
 	private byte[] certificate; // raw data
 
@@ -83,14 +81,18 @@ public class SecureData {
 		rng = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
 	}
 
-	/** Public key encryption
+	/**
+	 * Public key encryption
+	 * 
 	 * @return length of encrypted data
 	 */
 	short publicEncrypt(byte[] plaintext, byte counter, byte[] ciphertext) {
 		short inOffset = (short) (counter * SIZE_PUBENC_PLAIN);
-		short inSize = SIZE_PUBENC_PLAIN; // FIXME: size 4th msg
-		return pubEncrypter
-				.doFinal(plaintext, inOffset, inSize, ciphertext, (short) 0);
+		short fourthSize = (SIZE_CERT_CARD + SIZE_NONCE + SIZE_AES_KEY + SIZE_RSA_SIG)
+				% SIZE_PUBENC_PLAIN;
+		short inSize = (counter < 4 ? SIZE_PUBENC_PLAIN : fourthSize);
+		return pubEncrypter.doFinal(plaintext, inOffset, inSize, ciphertext,
+				(short) 0);
 	}
 
 	/**
@@ -115,7 +117,7 @@ public class SecureData {
 		// sign nonce + tmpkey
 		len += signer.sign(buffer, SIZE_CERT_CARD,
 				(short) (SIZE_NONCE + SIZE_AES_KEY), buffer, len);
-		
+
 		return len;
 	}
 
