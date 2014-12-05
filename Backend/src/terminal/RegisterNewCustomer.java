@@ -1,6 +1,5 @@
 package terminal;
 
-import javax.swing.JOptionPane;
 
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -12,14 +11,14 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
 import backend.BackendRentalTerminal;
-import backend.ByteUtils;
 
 public class RegisterNewCustomer {
 
 	protected Shell shell;
 	private Text txt_CustName;
+	protected static RegisterNewCustomer window;
+	
 	BackendRentalTerminal rt = new BackendRentalTerminal();
-	ByteUtils utils = new ByteUtils();
 
 	/**
 	 * Launch the application.
@@ -27,7 +26,7 @@ public class RegisterNewCustomer {
 	 */
 	public static void main(String[] args) {
 		try {
-			RegisterNewCustomer window = new RegisterNewCustomer();
+			window = new RegisterNewCustomer();
 			window.open();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -59,6 +58,7 @@ public class RegisterNewCustomer {
 		
 		final Label lblNewCustomer = new Label(shell, SWT.NONE);
 		lblNewCustomer.setBounds(20, 199, 68, 17);
+
 		
 		Label lblCustomerName = new Label(shell, SWT.NONE);
 		lblCustomerName.setBounds(20, 65, 122, 17);
@@ -76,6 +76,7 @@ public class RegisterNewCustomer {
 		btnSubmit.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				//JOptionPane.showMessageDialog(null, txt_CustName.getText());
 				rt.RegisterNewCustomer(txt_CustName.getText());
 				lblNewCustomer.setText(txt_CustName.getText());
 			}

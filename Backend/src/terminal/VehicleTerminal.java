@@ -105,12 +105,12 @@ public class VehicleTerminal {
 			;
 
 		mutualAuthentication();
-		startIgnition();
+		/*startIgnition();
 		// "drive" 5 km
 		for (int i = 0; i < 5; ++i) {
 		    driving();
 		}
-		stopVehicle();
+		stopVehicle();*/
 	}
 	
 	/*
@@ -166,7 +166,8 @@ public class VehicleTerminal {
 	/*
 	 * We receive a signal here when the card wants to ignite the vehicle
 	 */
-	private void startIgnition() {
+	public String startIgnition() {
+		String message = "";
 		byte[] ignition = new byte[1];
 		ignition[0] = MSG_IGNITION;
 		byte[] ignitionReply = sendToCard(ignition, INS_VT_START, sessionKey);
@@ -189,23 +190,27 @@ public class VehicleTerminal {
 				card.setKilometers(km2);
 				addLogEntry(km, signature);
 				startVehicle();
+				message = "Vehicle is starting";
 			} else {
 				card.setSessionKey(null);
 				System.out.println("Signature failed, quitting now");
+				message = "Signature failed, quitting now";
 				System.exit(-1);
 			}
 		} else if (rData[0] == MSG_NOT_ENOUGH_KM ) {
 			byte[] signature = new byte[128];
 			System.arraycopy(ignitionReply, 1, signature, 0, 128);
 			addLogEntry("Not enough km".getBytes(), signature);
+			message = "Not enough km";
 		}
+		return message;
 	}
 	
 	/*
 	 * This is the driving function which will do the ticking
 	 */
-	private void driving() {
-	    
+	public String driving() {
+	    String msg = "";
 		// Send the deduct one message to the card
 		byte[] message = new byte[1];
 		message[0] = MSG_DEDUCT_KM;
@@ -230,12 +235,15 @@ public class VehicleTerminal {
                 if (sNewKm == (oldKm - 1)) {
                     addLogEntry(rData); // log the reply, we're good
                     card.setKilometers(sNewKm);
+                    msg = "Kilometers before ticking: " + oldKm + " \n current kilometers: " + sNewKm;
                 } else { //card did not deduct correctly!
                     safeStop();
+                    msg = "Card did not deduct correctly! Stopping the car!";
                 }
 	        } else { //Signature check failed!
 	            System.out.println("Sig failed");
 	            safeStop();
+	            msg = "Signature check failed!";
 	        }
 		} else if (reply == MSG_NOT_ENOUGH_KM) {
 		    // Nothing left on the card, log it and perform safe stop
@@ -244,16 +252,18 @@ public class VehicleTerminal {
 		    byte[] signature = new byte[128];
             System.arraycopy(cardreply, 1, signature, 0, 128);
             addLogEntry(replyBytes, signature);
-            
+            msg = "Nothing left on the card. Performing safe stop";
             safeStop();
 		}
+		return msg;
 		
 	}
 	
 	/*
 	 * stopVehicle() is a "correct" stop when the key is turned 
 	 */
-	private void stopVehicle() {
+	public String stopVehicle() {
+		String msg = "";
 		byte[] message = new byte[1];
 		message[0] = MSG_STOP;
 		
@@ -274,18 +284,20 @@ public class VehicleTerminal {
 				addLogEntry(rData, signature);
 				stopThread = true;
 				System.out.println("Stopped correctly, remove card");
+				msg = "Stopped correctly, remove card";
 			} else {
 				card.setSessionKey(null);
 				stopThread = true;
 				System.out.println("Card error, still stopping the car...");
+				msg = "Card error, still stopping the car...";
 			}
 		} else {
 			card.setSessionKey(null);
 			stopThread = true;
 			System.out.println("Signature error, still stopping the car...");
+			msg = "Signature error, still stopping the car...";
 		}
-		
-		
+		return msg;		
 		
 	}
 

@@ -8,6 +8,8 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
+import backend.BackendRentalTerminal;
+
 public class Menu {
 
 	protected Shell shell;
@@ -53,6 +55,9 @@ public class Menu {
 	 */
 	protected void createContents() {
 		final RegisterNewCustomer regWindow = new RegisterNewCustomer();
+		final TopUp topUpwindow = new TopUp();
+		final Refund refundWindow = new Refund();
+		final BackendRentalTerminal rt = new BackendRentalTerminal();
 		
 		shell = new Shell();
 		shell.setSize(346, 300);
@@ -90,8 +95,16 @@ public class Menu {
 					regWindow.open();
 				}else if(btnRadioButton_TopUp.getSelection()){
 					m = "top up";
+					window.close();
+					Card card = rt.AuthenticateCard();
+					topUpwindow.setCard(card);
+					topUpwindow.open();
 				}else if(btnRadioButton_Refund.getSelection()){
 					m = "refund";
+					window.close();
+					Card card = rt.AuthenticateCard();
+					refundWindow.setCard(card);
+					refundWindow.open();
 				}
 				//JOptionPane.showMessageDialog(null, m);
 			}
