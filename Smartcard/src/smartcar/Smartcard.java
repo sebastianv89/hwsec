@@ -516,6 +516,7 @@ public class Smartcard extends Applet implements ISO7816 {
 		len = 1;
 		tmp[0] = MSG_STOP_OK;
 		len += sd.sign(tmp, (short) 0, len, tmp, len);
+		Util.arrayCopy(tmp, (short) 0, buf, (short) 0, len);
 		apdu.setOutgoingAndSend((short) 0, len);
 	}
 

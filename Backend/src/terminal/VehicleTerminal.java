@@ -106,8 +106,11 @@ public class VehicleTerminal {
 
 		mutualAuthentication();
 		startIgnition();
-		driving();
-
+		// "drive" 5 km
+		for (int i = 0; i < 5; ++i) {
+		    driving();
+		}
+		stopVehicle();
 	}
 	
 	/*
@@ -127,7 +130,7 @@ public class VehicleTerminal {
 					0x00, data);
 			System.out.println(capdu + " Data: " + bu.toHexString(data));
 			rapdu = applet.transmit(capdu);
-			System.out.println(rapdu);
+			System.out.println(rapdu + " Data: " + bu.toHexString(rapdu.getData()));
 			if (rapdu.getSW() != ISO7816_SW_NO_ERROR) {
 				if (rapdu.getData() != null) { //if we got a reply
 					//decrypt the rapdu
@@ -171,27 +174,25 @@ public class VehicleTerminal {
 		// Split this block into: reply data and signature
 		byte[] rData = new byte[3]; //we expect iR[0] for the status msg, plus a short "km" (2 bytes)
 		System.out.println(ignitionReply.length);
+		System.arraycopy(ignitionReply, 0, rData, 0, 3);
 		
 		if (rData[0] == MSG_IGNITION_OK ) { // Iginition ok
-			System.arraycopy(ignitionReply, 0, rData, 0, 3);
 			byte[] signature = new byte[128];
 			System.arraycopy(ignitionReply, 3, signature, 0, 128);
 			boolean sigCheck = mu.sigVerif(rData, card.getCardModulus(), signature);
 
 			if (sigCheck == true) { //if the signature matches
-				// Check what the message was ("ignition ok", km) or ("not enough km")
-				// Only in case of ignition ok, call startVehicle()
 				byte[] km = new byte[2];
 				System.arraycopy(rData, 1, km, 0, 2);
 				ByteUtils bu = new ByteUtils();
 				short km2 = bu.bytesToShort(km);
 				card.setKilometers(km2);
 				addLogEntry(km, signature);
-
+				startVehicle();
 			} else {
-				//TODO: Signature didnt match, abort ABORT LEAVE THE SHIP NOW!!!
 				card.setSessionKey(null);
-				//TODO: Display message
+				System.out.println("Signature failed, quitting now");
+				System.exit(-1);
 			}
 		} else if (rData[0] == MSG_NOT_ENOUGH_KM ) {
 			byte[] signature = new byte[128];
@@ -204,40 +205,47 @@ public class VehicleTerminal {
 	 * This is the driving function which will do the ticking
 	 */
 	private void driving() {
+	    
 		// Send the deduct one message to the card
 		byte[] message = new byte[1];
 		message[0] = MSG_DEDUCT_KM;
+		
+		// TODO: set timeout for reply
 		byte[] cardreply = sendToCard(message, INS_VT_TICK_KM, sessionKey);
-		byte[] rData = new byte[3]; // 1 byte status, 2 bytes (short) km
-		System.arraycopy(cardreply, 0, rData, 0, 3);
-		byte[] signature = new byte[128];
-		System.arraycopy(cardreply, 3, signature, 0, 128);
-		boolean sigCheck = mu.sigVerif(rData, card.getCardModulus(), signature);
+		byte reply = cardreply[0];
 		
-		//TODO: Start a timer and perform safestop after 10seconds no reply from the card!
-		
-		if (sigCheck == true) {
-			//rData = signed status message MSG_DEDUCT_OK or MSG_NOT_ENOUGH_KM, plus a short with the new km (2bytes)
-			if (rData[0] == MSG_DEDUCT_OK) {
-				short oldKm = (short) card.getKilometers();
-				System.out.println("Old km: " + oldKm);
-				byte[] newKm = new byte[2];
-				System.arraycopy(rData, 1, newKm, 0, 2);
-				short sNewKm = bu.bytesToShort(newKm);
-				System.out.println("New km: " + sNewKm);
-				if (sNewKm == (oldKm - 1)) {
-					addLogEntry(rData); // log the reply, we're good
-				} else { //card did not deduct correctly!
-					safeStop();
-				}
-			} else if (rData[0] == MSG_NOT_ENOUGH_KM) {
-				// Nothing left on the card, log it and perform safe stop
-				addLogEntry(rData, signature);
-				System.out.println("Not enough km, performing safe stop");
-				safeStop();
-			}
-		} else { //Signature check failed!
-			safeStop();
+		if (reply == MSG_DEDUCT_OK) {
+		    byte[] rData = new byte[3]; // 1 byte status, 2 bytes (short) km
+	        System.arraycopy(cardreply, 0, rData, 0, 3);
+	        byte[] signature = new byte[128];
+	        System.arraycopy(cardreply, 3, signature, 0, 128);
+	        boolean sigCheck = mu.sigVerif(rData, card.getCardModulus(), signature);
+	        if (sigCheck == true) {
+	            short oldKm = (short) card.getKilometers();
+                System.out.println("Old km: " + oldKm);
+                byte[] newKm = new byte[2];
+                System.arraycopy(rData, 1, newKm, 0, 2);
+                short sNewKm = bu.bytesToShort(newKm);
+                System.out.println("New km: " + sNewKm);
+                if (sNewKm == (oldKm - 1)) {
+                    addLogEntry(rData); // log the reply, we're good
+                    card.setKilometers(sNewKm);
+                } else { //card did not deduct correctly!
+                    safeStop();
+                }
+	        } else { //Signature check failed!
+	            System.out.println("Sig failed");
+	            safeStop();
+	        }
+		} else if (reply == MSG_NOT_ENOUGH_KM) {
+		    // Nothing left on the card, log it and perform safe stop
+		    byte[] replyBytes = new byte[1];
+		    replyBytes[0] = reply;
+		    byte[] signature = new byte[128];
+            System.arraycopy(cardreply, 1, signature, 0, 128);
+            addLogEntry(replyBytes, signature);
+            
+            safeStop();
 		}
 		
 	}
@@ -248,10 +256,12 @@ public class VehicleTerminal {
 	private void stopVehicle() {
 		byte[] message = new byte[1];
 		message[0] = MSG_STOP;
-		byte[] cardreply = sendToCard(message, INS_VT_STOP, sessionKey);
 		
 		// Before we do anything, destroy the session key
-		card.setSessionKey(null);
+        card.setSessionKey(null);
+        
+        // send the data
+		byte[] cardreply = sendToCard(message, INS_VT_STOP, sessionKey);
 		
 		byte[] rData = new byte[1]; // 1 byte status
 		System.arraycopy(cardreply, 0, rData, 0, 1);
@@ -263,18 +273,16 @@ public class VehicleTerminal {
 			if (rData[0] == MSG_STOP_OK) {
 				addLogEntry(rData, signature);
 				stopThread = true;
-				//TODO: Display a message that it's safe to remove the card
-			} else { 
-				//TODO: Got a different message as what we expected, ABORT ALL THE THINGS!
+				System.out.println("Stopped correctly, remove card");
+			} else {
 				card.setSessionKey(null);
 				stopThread = true;
-				//TODO: Display a message that the usr should re-insert the card
+				System.out.println("Card error, still stopping the car...");
 			}
 		} else {
-			//TODO: Signature check failed, ABORT!
 			card.setSessionKey(null);
 			stopThread = true;
-			//TODO: Display a message that the user should re-insert the card
+			System.out.println("Signature error, still stopping the car...");
 		}
 		
 		
@@ -284,12 +292,14 @@ public class VehicleTerminal {
 	private void safeStop() {
 		//perform a safeStop
 		// Destroy session key and stop the communication with the card
+	    System.out.println("Not enough km, performing safe stop");
 		card.setSessionKey(null);
 		stopThread = true;
 	}
 	
 	private boolean startVehicle() {
-		return true; // VROOOOOOM!!!
+	    System.out.println("VRRROOOOOOOM!!!!");
+		return true;
 	}
 	
 	private void addLogEntry(byte[] data) {
