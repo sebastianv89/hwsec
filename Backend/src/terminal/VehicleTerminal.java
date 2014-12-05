@@ -106,6 +106,7 @@ public class VehicleTerminal {
 
 		mutualAuthentication();
 		startIgnition();
+		driving();
 
 	}
 	
@@ -204,7 +205,9 @@ public class VehicleTerminal {
 	 */
 	private void driving() {
 		// Send the deduct one message to the card
-		byte[] cardreply = sendToCard(MSG_DEDUCT_KM, INS_VT_TICK_KM, sessionKey);
+		byte[] message = new byte[1];
+		message[0] = MSG_DEDUCT_KM;
+		byte[] cardreply = sendToCard(message, INS_VT_TICK_KM, sessionKey);
 		byte[] rData = new byte[3]; // 1 byte status, 2 bytes (short) km
 		System.arraycopy(cardreply, 0, rData, 0, 3);
 		byte[] signature = new byte[128];
@@ -217,9 +220,11 @@ public class VehicleTerminal {
 			//rData = signed status message MSG_DEDUCT_OK or MSG_NOT_ENOUGH_KM, plus a short with the new km (2bytes)
 			if (rData[0] == MSG_DEDUCT_OK) {
 				short oldKm = (short) card.getKilometers();
+				System.out.println("Old km: " + oldKm);
 				byte[] newKm = new byte[2];
 				System.arraycopy(rData, 1, newKm, 0, 2);
 				short sNewKm = bu.bytesToShort(newKm);
+				System.out.println("New km: " + sNewKm);
 				if (sNewKm == (oldKm - 1)) {
 					addLogEntry(rData); // log the reply, we're good
 				} else { //card did not deduct correctly!
@@ -228,6 +233,7 @@ public class VehicleTerminal {
 			} else if (rData[0] == MSG_NOT_ENOUGH_KM) {
 				// Nothing left on the card, log it and perform safe stop
 				addLogEntry(rData, signature);
+				System.out.println("Not enough km, performing safe stop");
 				safeStop();
 			}
 		} else { //Signature check failed!
@@ -240,7 +246,9 @@ public class VehicleTerminal {
 	 * stopVehicle() is a "correct" stop when the key is turned 
 	 */
 	private void stopVehicle() {
-		byte[] cardreply = sendToCard(MSG_STOP, INS_VT_STOP, sessionKey);
+		byte[] message = new byte[1];
+		message[0] = MSG_STOP;
+		byte[] cardreply = sendToCard(message, INS_VT_STOP, sessionKey);
 		
 		// Before we do anything, destroy the session key
 		card.setSessionKey(null);
