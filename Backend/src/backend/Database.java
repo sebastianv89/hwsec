@@ -150,7 +150,7 @@ public class Database {
 		Statement stmt;
 		try {
 			stmt = conn.createStatement();
-			stmt.executeUpdate( "UPDATE card SET revoked = \"1\" WHERE publicKey = \"" + publicKey + "\""  );
+			stmt.executeUpdate( "UPDATE card SET revocation = \"1\" WHERE publicKey = \"" + publicKey + "\""  );
 			stmt.close();
 			//		    conn.commit();
 		} catch (SQLException e) {
@@ -166,14 +166,14 @@ public class Database {
 	 * @return the status of the revoked flag (true = revoked, false = not revoked)
 	 */
 	public boolean isRevoked(String strPublicKey) {
-		/*Statement stmt;
+		Statement stmt;
 		String rev = "";
 
 		try {
 			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery( "SELECT revoked FROM card WHERE publicKey = \"" + strPublicKey + "\"" );
+			ResultSet rs = stmt.executeQuery( "SELECT revocation FROM card WHERE publicKey = \"" + strPublicKey + "\"" );
 			while ( rs.next() ) {
-				rev = rs.getString("revoked");
+				rev = rs.getString("revocation");
 			}
 			rs.close();
 			stmt.close();
@@ -185,8 +185,8 @@ public class Database {
 			return rev.equals("1"); //Will return true if it equals 1 and false if it equals 0
 		} else {
 			return false; //TODO: We return false if the card is not found???
-		}*/
-		return false;
+		}
+//		return false;
 	}
 
 	/**
