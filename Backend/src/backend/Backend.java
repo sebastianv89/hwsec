@@ -110,10 +110,10 @@ public class Backend {
 		byte[] publicKey = new byte[CV.PUBMODULUS];
 		System.arraycopy(cert, 1, publicKey, 0, CV.PUBMODULUS); // bytes 1...162 are pubKey
 		
-		Serialization serialize = new Serialization();
-		String strPublicKey = serialize.SerializeByteKey(publicKey);
+		//Serialization serialize = new Serialization();
+		//String strPublicKey = serialize.SerializeByteKey(publicKey);
 		
-		db.revokeSmartcard(strPublicKey);
+		db.revokeSmartcard(publicKey);
 	}
 
 	/**
@@ -135,10 +135,10 @@ public class Backend {
 		System.arraycopy(cert, 1, publicKey, 0, CV.PUBMODULUS);
 		System.out.println(publicKey.length);
 		
-		Serialization serialize = new Serialization();
-		String strPublicKey = serialize.SerializeByteKey(publicKey);
+		//Serialization serialize = new Serialization();
+		//String strPublicKey = serialize.SerializeByteKey(publicKey);
 		
-		if (db.isRevoked(strPublicKey)) {
+		if (db.isRevoked(publicKey)) {
 			throw new RevokedException();
 		}
 		

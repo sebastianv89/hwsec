@@ -2,7 +2,9 @@ package backend;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Random;
 /**
  * 
@@ -74,5 +76,14 @@ public class ByteUtils {
 		return random;
 	}
 	
+	
+	//convert long date to string date
+	public String convertLongDateToString(long expDate){
+	    Date date=new Date(expDate);
+	    SimpleDateFormat df2 = new SimpleDateFormat("dd/MM/yy");
+	    String dateText = df2.format(date);
+	    System.out.println(dateText);
+	    return dateText;
+	}
 	
 }

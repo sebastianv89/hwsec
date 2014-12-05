@@ -585,6 +585,7 @@ public class Smartcard extends Applet implements ISO7816 {
 			ISOException.throwIt(SW_DATA_INVALID);
 		}
 
+		
 		// step 8
 		tmp[0] = MSG_TOPUP_OK;
 		len = 3;
@@ -599,6 +600,7 @@ public class Smartcard extends Applet implements ISO7816 {
 
 		// step 9
 		km.topup(amount);
+		
 	}
 
 	/** Protocol 6.11 (refund), step 8-9 */

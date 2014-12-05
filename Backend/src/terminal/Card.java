@@ -13,6 +13,7 @@ public class Card {
 	byte[] cardModulus;
 	byte[] cardCert;
 	byte[] sessionKey;
+	byte[] signature;
 	
 	
 	public Card(){
@@ -52,6 +53,7 @@ public class Card {
 		this.cardCert = cardcert;
 	}
 	
+	
 	public byte[] getCertificate(){
 		return this.cardCert;
 	}
@@ -68,13 +70,10 @@ public class Card {
 		return this.customerName;
 	}
 	
-	public int getKilometers(){
+	public short getKilometers(){
 		return this.kilometers;
 	}
 	
-	public String getStringKilometers(){
-		return this.expString;
-	}
 	
 	public long getExpDate(){
 		return this.expiration;

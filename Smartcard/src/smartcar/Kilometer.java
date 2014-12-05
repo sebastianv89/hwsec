@@ -25,7 +25,7 @@ public class Kilometer {
 	}
 
 	private void setKm(short km) {
-		byte j = (byte) ((i + 1) % N);
+		byte j = (byte) ((byte)(i + 1) % N);
 		JCSystem.beginTransaction();
 		value[j] = km;
 		i = j;

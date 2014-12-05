@@ -7,6 +7,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -37,17 +38,26 @@ public class Database {
 	 * @return 
 	 * @Fitria: change the query. Need to get the result from card and customer at once.
 	 */
-	public ResultSet selectCard(String strPublicKey) {
-		Statement stmt;
+	public ResultSet selectCard(byte[] publicKey) {
+		//Statement stmt;
+		PreparedStatement ps;
 		ResultSet rs = null;
 
 		try {
-			stmt = conn.createStatement();
-			rs = stmt.executeQuery("SELECT card.publicKey as id, card.customerId as custID, "
+			//stmt = conn.createStatement();
+			ps = conn.prepareStatement("SELECT card.publicKey as id, card.customerId as custID, "
 					+ "customer.name as custName, card.totalKm as km, card.expiration as exp, "
 					+ "card.revocation as revoke, card.publicKey as cardPK "
 					+ "FROM card, customer "
-					+ "WHERE card.customerID = customer.id and card.publicKey = \"" + strPublicKey + "\"" );
+					+ "WHERE card.customerID = customer.id and card.publicKey = ?" );
+			ps.setBytes(1, publicKey);
+			rs = ps.executeQuery();
+			
+			/*rs = stmt.executeQuery("SELECT card.publicKey as id, card.customerId as custID, "
+					+ "customer.name as custName, card.totalKm as km, card.expiration as exp, "
+					+ "card.revocation as revoke, card.publicKey as cardPK "
+					+ "FROM card, customer "
+					+ "WHERE card.customerID = customer.id and card.publicKey = \"" + strPublicKey + "\"" );*/
 			//rs.close();
 			//stmt.close();
 		} catch (SQLException e) {
@@ -98,6 +108,7 @@ public class Database {
 
 			if (customerId == -1) {
 				stmt = conn.createStatement();
+				
 				stmt.executeUpdate( "INSERT INTO customer (name) VALUES (\"" + customerName + "\")"  );
 				//				conn.commit();
 				stmt.close();
@@ -128,13 +139,22 @@ public class Database {
 	 * 
 	 * @Max: Total kilometers is always 0 when you add a new smartcard so removed it again
 	 */
-	public void addSmartcard(int customerId, long expiration, String strPublicKey) {
-		Statement stmt;
+	public void addSmartcard(int customerId, long expiration, byte[] strPublicKey) {
+		
+		//Statement stmt;
+		PreparedStatement ps;
 		try {
-			stmt = conn.createStatement();
-			stmt.executeUpdate( "INSERT INTO card (customerId, totalKm, expiration, revocation, publicKey) "
-					+ "VALUES (\"" + customerId + "\", \"0\", \"" + expiration + "\", \"0\", \"" + strPublicKey + "\")"  );
-			stmt.close();
+			//stmt = conn.createStatement();
+			ps = conn.prepareStatement("INSERT INTO card (customerId, totalKm, expiration, revocation, publicKey) "
+					+ "VALUES (?, 0, ?, 0, ?)" );
+			ps.setInt(1, customerId);
+			ps.setLong(2, expiration);
+			ps.setBytes(3, strPublicKey);
+			
+			ps.executeUpdate();
+			//stmt.executeUpdate( "INSERT INTO card (customerId, totalKm, expiration, revocation, publicKey) "
+			//		+ "VALUES (\"" + customerId + "\", \"0\", \"" + expiration + "\", \"0\", \"" + strPublicKey + "\")"  );
+		//	stmt.close();
 			//		    conn.commit();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -146,12 +166,17 @@ public class Database {
 	 * 
 	 * @param publicKey		Used for identifying the correct card
 	 */
-	public void revokeSmartcard(String publicKey) {
-		Statement stmt;
+	public void revokeSmartcard(byte[] publicKey) {
+		//Statement stmt;
+		PreparedStatement ps;
 		try {
-			stmt = conn.createStatement();
-			stmt.executeUpdate( "UPDATE card SET revocation = \"1\" WHERE publicKey = \"" + publicKey + "\""  );
-			stmt.close();
+			//stmt = conn.createStatement();
+			ps = conn.prepareStatement("UPDATE card SET revocation = \"1\" WHERE publicKey = ?");
+			ps.setBytes(1, publicKey);
+			ps.executeUpdate();
+			ps.close();
+			//stmt.executeUpdate( "UPDATE card SET revocation = \"1\" WHERE publicKey = \"" + publicKey + "\""  );
+			//stmt.close();
 			//		    conn.commit();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -165,18 +190,22 @@ public class Database {
 	 * @param publicKey		Used for identifying the correct card
 	 * @return the status of the revoked flag (true = revoked, false = not revoked)
 	 */
-	public boolean isRevoked(String strPublicKey) {
-		Statement stmt;
+	public boolean isRevoked(byte[] publicKey) {
+		//Statement stmt;
+		PreparedStatement ps;
 		String rev = "";
 
 		try {
-			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery( "SELECT revocation FROM card WHERE publicKey = \"" + strPublicKey + "\"" );
+			//stmt = conn.createStatement();
+			ps = conn.prepareStatement("SELECT revocation FROM card WHERE publicKey = ?" );
+			ps.setBytes(1, publicKey);
+			ResultSet rs = ps.executeQuery();//stmt.executeQuery( "SELECT revocation FROM card WHERE publicKey = \"" + strPublicKey + "\"" );
 			while ( rs.next() ) {
 				rev = rs.getString("revocation");
 			}
 			rs.close();
-			stmt.close();
+			ps.close();
+			//stmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -211,25 +240,37 @@ public class Database {
 	 * @param id : id of the rows that will be updated
 	 * @return states: equal to true if succeed, false otherwise 
 	 */
-	public boolean updateKilometersExpiration(int kmTopUp, long expirationNew, String strPublicKey){
+	public boolean updateKilometersExpiration(int kmTopUp, long expirationNew, byte[] publicKey){
 		boolean states = false;
-		Statement stmt;
+		//Statement stmt;
+		PreparedStatement ps;
 		try {
-			stmt = conn.createStatement();
-			String rev = "";
-			ResultSet rs = stmt.executeQuery( "SELECT totalKM FROM card WHERE publicKey = \"" + strPublicKey + "\"" );
+			//stmt = conn.createStatement();
+			ps = conn.prepareStatement("SELECT totalKM FROM card WHERE publicKey = ?");
+			ps.setBytes(1, publicKey);
+			ResultSet rs = ps.executeQuery();
+			int rev = 0;
+			
+			//ResultSet rs = stmt.executeQuery( "SELECT totalKM FROM card WHERE publicKey = \"" + strPublicKey + "\"" );
 			while ( rs.next() ) {
-				rev = rs.getString("totalKm");
+				rev = rs.getInt("totalKM");
 			}
 			rs.close();
-			stmt.close();
+			ps.close();
+			//stmt.close();
 			
-			long totalKm = Long.parseLong(rev);
+			//long totalKm = Long.parseLong(rev);
 			
-			long kmNew = kmTopUp + totalKm; // this is the old value from db + topup value
-			stmt = conn.createStatement();
-			stmt.executeUpdate("update card set totalKM = \""+ kmNew +"\", expiration = \""+ expirationNew +"\" WHERE publicKey = \"" + strPublicKey + "\"");
-			stmt.close();
+			long kmNew = kmTopUp + rev; // this is the old value from db + topup value
+			ps = conn.prepareStatement("update card set totalKM = ?, expiration = ? WHERE publicKey = ?");
+			ps.setLong(1, kmNew);
+			ps.setLong(2, expirationNew);
+			ps.setBytes(3, publicKey);
+			ps.executeUpdate();
+			ps.close();
+			//stmt = conn.createStatement();
+			//stmt.executeUpdate("update card set totalKM = \""+ kmNew +"\", expiration = \""+ expirationNew +"\" WHERE publicKey = \"" + strPublicKey + "\"");
+			//stmt.close();
 			states = true;
 		} catch (SQLException e) {
 			e.printStackTrace();

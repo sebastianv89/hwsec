@@ -1,5 +1,7 @@
 package backend;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
@@ -74,14 +76,17 @@ public class BackendRentalTerminal {
 			e.printStackTrace();
 		}
 		//2b. extract the expiration date and pubkey from card certificate
-		byte[] exp = serial.getExpFromCert(newCert);
-		byte[] pubKey = serial.getPublicKeyFromCert(newCert);
-		String strPubKey = serial.SerializeByteKey(pubKey);
+		byte[] exp = new byte[CV.EXP_LENGTH];
+		System.arraycopy(newCert, 129, exp, 0, exp.length);
+		byte[] pubKey = new byte[CV.PUBMODULUS];
+		System.arraycopy(newCert, 1, pubKey, 0, pubKey.length);
+		System.out.println(pubKey);
+		
 		long expLong = byteUtil.bytesToLong(exp);
 		
 		//3. add to database customer
 		Integer customerId = db.insertCustomer(name);
-		db.addSmartcard(customerId, expLong, strPubKey);
+		db.addSmartcard(customerId, expLong, pubKey);
 		
 	}
 	
@@ -92,7 +97,7 @@ public class BackendRentalTerminal {
 	 * without the ticking
 	 */
 	
-	public Card AuthenticateCard(short uKm){
+	public Card AuthenticateCard(){
 		//1. read from the card and do mutual authentication
 		byte[] cert = MA.TerminalMutualAuth(GetRTCert(), GetRTPrivateKey());
 		byte[] newCert = null;
@@ -100,6 +105,8 @@ public class BackendRentalTerminal {
 		/* renew the certificate */
 		try {
 			newCert = be.renewCertificate(cert);
+			card.setCertificate(newCert);
+			
 			//split the certificate into two packages
 			byte[] pack1 = new byte[CV.PUBMODULUS + 1 + CV.EXP_LENGTH];  //1 + 128 + 8
 			System.arraycopy(newCert, 0, pack1, 0, pack1.length); 
@@ -112,23 +119,16 @@ public class BackendRentalTerminal {
 			byte[] scPack1 = CT.sendToCard(pack1, CT.INS_RT_RENEW_CERT_1);
 			byte[] scPack2 = CT.sendToCard(pack2, CT.INS_RT_RENEW_CERT_2); //here I receive the km signed and encrypted
 			
+			//get the km from the card
 			byte[] km = new byte[2];
 			System.out.println("p2: "+ byteUtil.toHexString(scPack2));
+			System.arraycopy(scPack2, 0, km, 0, km.length);
 			short skm = byteUtil.bytesToShort(km);
 			card.setKilometers(skm);
 			
 			//extract expiration date from the new certificate and convert it to Long 
 			long expNew  = byteUtil.bytesToLong(serial.getExpFromCert(newCert));
 			card.setExpiration(expNew);
-			
-			
-			byte[] data = new byte[3];
-			data[0] = CT.MSG_TOPUP;
-			byte[] ukmB = byteUtil.shortToBytes(uKm);
-			System.arraycopy(ukmB, 0, data, 1, 2);
-			System.out.print("data: "+ byteUtil.toHexString(data));
-			byte[] scTopUp = CT.sendToCard(data, CT.INS_RT_TOPUP_KM);
-			System.out.print(byteUtil.toHexString(scTopUp));
 			
 			
 		} catch (RevokedException e) {
@@ -138,45 +138,67 @@ public class BackendRentalTerminal {
 		return card;
 	}
 	
-	public Card TopUpCard(short cardKm){
+	public Card TopUpCard(Card card, short cardKm){
 		
-		// Get card from database  
-		Card card = AuthenticateCard(cardKm);
+		byte[] data = new byte[3];
+		data[0] = CT.MSG_TOPUP;
+		byte[] ukmB = byteUtil.shortToBytes(cardKm);
+		card.setKilometers((short)(card.getKilometers() + cardKm));
+		System.arraycopy(ukmB, 0, data, 1, 2);
+		//System.out.print("data: "+ byteUtil.toHexString(data));
+		byte[] scTopUp = CT.sendToCard(data, CT.INS_RT_TOPUP_KM);
+		//System.out.println(byteUtil.toHexString(scTopUp));
 		
+		byte[] sig = new byte[CV.SIG_LENGTH]; //SIGNATURE 128
+		System.arraycopy(card.getCertificate(), CV.PUBMODULUS + 1 + CV.EXP_LENGTH, sig, 0, CV.SIG_LENGTH);
+		//get card public key
+		//split the certificate into two packages
+		byte[] pubkey = new byte[CV.PUBMODULUS];  //128 
+		System.arraycopy(card.getCertificate(), 1, pubkey, 0, pubkey.length); 
+		card.setCardModulus(pubkey);
 		
-	//	try {
+		//add to the log
+		addLogEntry(ukmB, sig);
+		//update to database  
+		db.updateKilometersExpiration(cardKm, card.getExpDate(), pubkey);
 			
-			
-			
-		/*	//convert the long date to string
-			String expString = convertLongDateToString(expNew);
-			card.setExpiration(expNew);
-			card.setStringExpiration(expString);
-			
-			// update to database  
-			//db.updateKilometersExpiration(card.getKilometers()+ cardKm, expNew, card.getID());
-				
-			//TODO update to the smartcard 
-			card.setKilometers((short) (km + cardKm));*/
-			
-			
-			
-		/*} catch (RevokedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
 		return card;
 	}
 	
 	
+	private void addLogEntry(byte[] data, byte[] signature) {
+		FileOutputStream file;
+		try {
+			file = new FileOutputStream("RTLogFile", true); //True to append
+			file.write(data);
+			file.write(signature);
+			file.close();
+		} catch ( IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 	//Refund the kilometers
-	public Card refundKilometers(){
-		//1. read from the card and do mutual authentication
-		byte[] cert = MA.TerminalMutualAuth(GetRTCert(), GetRTPrivateKey());
+	public Card refundKilometers(Card card){
+		byte[] data = new byte[1];
+		data[0] = CT.MSG_REFUND;
+		byte[] scRefund = CT.sendToCard(data, CT.INS_RT_REFUND_KM);
 		
-		Card card = getCardDB(cert); //2. get card data from database
+		byte[] sig = new byte[CV.SIG_LENGTH]; //SIGNATURE 128
+		System.arraycopy(card.getCertificate(), CV.PUBMODULUS + 1 + CV.EXP_LENGTH, sig, 0, CV.SIG_LENGTH);
+		//get card public key
+		//split the certificate into two packages
+		byte[] pubkey = new byte[CV.PUBMODULUS];  //128 
+		System.arraycopy(card.getCertificate(), 1, pubkey, 0, pubkey.length); 
+		card.setCardModulus(pubkey);
+		//add to the log
+		addLogEntry(data, sig);
+		//update to database  
+		db.updateKilometersExpiration(0, card.getExpDate(), pubkey);
+		
+	
 		card.setKilometers((short)0); 		//3. do the refund
-		//db.updateKilometersExpiration(0, card.getExpDate(), card.getID());  /*4. update to database  */
 				
 		//TODO update to Card
 		return card;
@@ -189,9 +211,9 @@ public class BackendRentalTerminal {
 	 */
 	public Card getCardDB(byte[] cardPublicKey){
 		Card card = new Card();
-		String strPubKey = serial.SerializeByteKey(cardPublicKey);
+		//String strPubKey = serial.SerializeByteKey(cardPublicKey);
 		
-		ResultSet rs = db.selectCard(strPubKey);
+		ResultSet rs = db.selectCard(cardPublicKey);
 		try {
 			if(rs.next()){
 				card = new Card(rs.getInt("id"), rs.getInt("custID"), rs.getString("custName"), 
@@ -208,14 +230,7 @@ public class BackendRentalTerminal {
 	}
 	
 
-	//convert long date to string date
-	private String convertLongDateToString(long expDate){
-	    Date date=new Date(expDate);
-	    SimpleDateFormat df2 = new SimpleDateFormat("dd/MM/yy");
-	    String dateText = df2.format(date);
-	    System.out.println(dateText);
-	    return dateText;
-	}
+	
 	
 	
 

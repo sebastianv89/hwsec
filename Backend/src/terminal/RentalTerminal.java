@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 import backend.BackendRentalTerminal;
+import backend.ByteUtils;
 
 /*
  * This is the main class of Rental Terminal
@@ -19,6 +20,7 @@ public class RentalTerminal {
 	public static void main(String[] args) throws SQLException {
 		//Call the classes that contains all the script needed
 		BackendRentalTerminal rt = new BackendRentalTerminal();
+		ByteUtils utils = new ByteUtils();
 		
 		System.out.println("Welcome to the Cars-Rental");
 		System.out.println("1. Register (for new customer)");
@@ -41,23 +43,30 @@ public class RentalTerminal {
 		}else if(menu.equals("2")){
 			System.out.println("Menu Top Up");
 			
+			Card card = rt.AuthenticateCard();
+			
+			System.out.println("Kilometers: " + card.getKilometers());
+			
 			System.out.print("Input the kilometers that you want to add: ");
 		    Scanner scKm = new Scanner(System.in);
 		    short kilometers = (short) scKm.nextInt();
 			
-		    Card card = rt.TopUpCard(kilometers);
-		    System.out.println("Name: "+ card.getCustomerName());
-		    System.out.println("Kilometers: " + card.getStringKilometers());
-		    System.out.println("Expiration date" + card.getExpDate());
+		    card = rt.TopUpCard(card, kilometers);
+		    //System.out.println("Name: "+ card.getCustomerName());
+		    System.out.println("Kilometers: " + card.getKilometers());
+		   // System.out.println("Expiration date: " + utils.convertLongDateToString(card.getExpDate()));
 			
 		}else if(menu.equals("3")){
 			//Refund is topup with 0
 			System.out.println("Menu Refund");
+			Card card = rt.AuthenticateCard();
 			
-			Card card = rt.refundKilometers();
-		    System.out.println("Name: "+ card.getCustomerName());
-		    System.out.println("Kilometers: " + card.getStringKilometers());
-		    System.out.println("Expiration date" + card.getExpDate());
+			System.out.println("Kilometers: " + card.getKilometers());
+			
+			card = rt.refundKilometers(card);
+		   // System.out.println("Name: "+ card.getCustomerName());
+			System.out.println("Kilometers: " + card.getKilometers());
+		   // System.out.println("Expiration date" + card.getExpDate());
 		}
 
 	}
