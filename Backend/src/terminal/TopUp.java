@@ -58,7 +58,7 @@ public class TopUp {
 	protected void createContents() {
 		shell = new Shell();
 		shell.setSize(378, 373);
-		shell.setText("SWT Application");
+		shell.setText("Smartcar Application - Top Up");
 		
 		Label lblKilometersInThe_1 = new Label(shell, SWT.NONE);
 		lblKilometersInThe_1.setText("Kilometers in the card after top up");

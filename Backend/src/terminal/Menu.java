@@ -61,7 +61,7 @@ public class Menu {
 		
 		shell = new Shell();
 		shell.setSize(346, 300);
-		shell.setText("SWT Application");
+		shell.setText("Smartcar Application - Rental Terminal");
 		
 		Label label = new Label(shell, SWT.NONE);
 		label.setText("Welcome to Cars Rental");

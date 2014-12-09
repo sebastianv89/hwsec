@@ -51,7 +51,7 @@ public class VehicleTerminalGui {
 	protected void createContents() {
 		shell = new Shell();
 		shell.setSize(507, 531);
-		shell.setText("SWT Application");
+		shell.setText("Smartcar Application - Vehicle Terminal");
 		
 		final Label lblMessage = new Label(shell, SWT.NONE);
 		lblMessage.setBounds(24, 125, 434, 348);

@@ -54,7 +54,7 @@ public class RegisterNewCustomer {
 	protected void createContents() {
 		shell = new Shell();
 		shell.setSize(335, 281);
-		shell.setText("SWT Application");
+		shell.setText("Smartcar Application - Register New Customer");
 		
 		final Label lblNewCustomer = new Label(shell, SWT.NONE);
 		lblNewCustomer.setBounds(20, 199, 68, 17);

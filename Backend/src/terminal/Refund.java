@@ -59,7 +59,7 @@ public class Refund {
 	protected void createContents() {
 		shell = new Shell();
 		shell.setSize(336, 274);
-		shell.setText("SWT Application");
+		shell.setText("Smartcar Application - Refund");
 		
 		Label lblNewLabel = new Label(shell, SWT.NONE);
 		lblNewLabel.setBounds(23, 69, 163, 17);
